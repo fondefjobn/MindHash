@@ -1,7 +1,12 @@
+import _io
+import io
+import threading
 from contextlib import closing
 from queue import Queue, Full
 from typing import List, Any
-
+import utils.utils as u
+import _thread as th
+import time
 from ouster import client, sdk, pcap
 import numpy as np
 from ouster.client import _client as cl, core, LidarPacket
@@ -12,13 +17,30 @@ default_metadata: str = '/metadata'
 all_channels: list[cl.ChanField] = [cl.ChanField.RANGE, cl.ChanField.NEAR_IR, cl.ChanField.REFLECTIVITY]  # immutable
 
 
-class ConfigParams:
-    def __init__(self, hostname: str):  # change to YML parser
-        self.host = hostname
-        self.lidar_port = 7502
-        self.imu_port = 7503
-        self.op_mode = cl.OperatingMode.OPERATING_NORMAL
-        self.lidar_mode = cl.LidarMode.MODE_1024x10
+class SensorCommand:
+    pass
+
+
+class StreamConfig:
+    sample_rate: int
+    queue_size: int
+    timer: bool
+    time_end: int
+    azimuth: float
+    range: float
+    elevation: float
+    save_local: bool
+    local_path: bool
+    cache_size: int
+
+
+class SensorParams:
+    def __init__(self, config: dict):  # change to YML parser
+        self.host = config['hostname']
+        self.lidar_port = config['lidar_port']
+        self.imu_port = config['imu_port']
+        self.op_mode = config['operating_mode']
+        self.lidar_mode = config['lidar_mode']
         self.pcap_path = default_pcap
         self.metadat_path = default_metadata
 
@@ -28,11 +50,11 @@ class MatrixCloud:
         self.clouds = {}
 
 
-class IO:
+class _IO:
     config: cl.SensorConfig = cl.SensorConfig()
     source: client.PacketSource = None
 
-    def __init__(self, params: ConfigParams):
+    def __init__(self, params: SensorParams):
         self.host = params.host
         self.config = cl.SensorConfig()
         self.config.udp_port_lidar = params.lidar_port
@@ -77,7 +99,8 @@ class IO:
                 except Full:
                     continue
 
-    def stream_scans(self, queue: Queue[MatrixCloud], channels: list[cl.ChanField] = all_channels):
+    def stream_scans(self, queue: Queue[MatrixCloud], config: dict,
+                     channels: list[cl.ChanField] = all_channels):
         """
         Read SDK-controlled stream of lidar data. More latency.
          Incomplete & late frames are dropped from stream internally.
@@ -89,7 +112,9 @@ class IO:
                 try:
                     queue.put_nowait(self.__get_matrix_cloud(xyzlut, scan, channels))
                 except Full:
+                    time.sleep(1)
                     continue
+                time.sleep(config['sample_rate'])
 
     @staticmethod
     def __get_matrix_cloud(xyzlut: cl.XYZLut, scan,
@@ -103,3 +128,51 @@ class IO:
             x, y, z = [c.flatten() for c in np.dsplit(xyz, 3)]
             matrix_cloud.clouds[channel] = [x, y, z]
         return matrix_cloud
+
+
+default_sens_config = 'Sensor/sensor_config.yaml'
+default_stream_config = 'Sensor/stream_config.yaml'
+
+
+class StreamThread(threading.Thread):
+    q: Queue[MatrixCloud]
+    io: _IO
+
+    def __init__(self, _io: _IO, conf: dict):
+        threading.Thread.__init__(self)
+        self.q = Queue(maxsize=conf['queue_size'])
+        self.config = conf
+        self.io = _io
+
+    def run(self) -> None:
+        self.io.stream_scans(self.q, self.config)
+
+
+class Sensor:
+    _io: _IO
+    stream_config: StreamConfig = StreamConfig
+    stream: StreamThread
+
+    def __init__(self, path=default_sens_config):
+        c_dict = u.FileUtils.load_file(path, ext='yaml')
+        self._io = _IO(c_dict)
+
+    def start_sensor(self):  # requires netcat
+        pass
+
+    def stop_sensor(self):  # requires netcat
+        pass
+
+    def read_stream(self) -> StreamThread:
+        c_dict = u.FileUtils.load_file(default_stream_config, ext='yaml')
+        stream = StreamThread(self._io, c_dict)
+        self.stream = stream
+        stream.run()
+        return stream
+
+    def stop_stream(self):
+        if self.stream is not None:
+            self.stream.join()
+
+    def get_oper_mode(self) -> str:  # requires netcat
+        pass

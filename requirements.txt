@@ -10,4 +10,3 @@ tqdm
 ouster-sdk[examples]
 torchvision
 spconv-cu102
-SharedArray
