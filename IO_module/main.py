@@ -2,8 +2,8 @@ import sys
 import logging
 from logging import critical, error, info, warning, debug
 
-
 logging.basicConfig(format='%(message)s', level=logging.DEBUG, stream=sys.stdout)
+
 
 def main(name):
     # Use a breakpoint in the code line below to debug your script.
