@@ -9,7 +9,5 @@ scikit-image
 tqdm
 ouster-sdk[examples]
 torchvision
---extra-index-url https://pypi.ngc.nvidia.com
-nvidia-cuda-runtime-cu11
 spconv-cu102
 SharedArray
