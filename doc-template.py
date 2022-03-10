@@ -29,10 +29,10 @@ for each input:
 """
 Description: <This function adds two numbers together>
 ---------------------------------
-someInput : <Expected datatype>
-someOtherInput : <Expected datatype>
+someInput : <Integer>
+someOtherInput : <Integer>
 ---------------------------------
-someOutput : <Expected datatype>
+someOutput : <Integer>
 """
 
 def someFunction(someInput, someOtherInput):
