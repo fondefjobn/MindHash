@@ -8,7 +8,7 @@ Description: <Longform description of the module, what it serves to do, and why>
 
 # Module Descriptions Example
 """
-Responsible for module: <Your name>
+Responsible for module: <Nevis King>
 Description: <This file exists to act as a template for the documentation of our code. 
 If there are changes you would like to make to it please contact Nevis King.>
 """
