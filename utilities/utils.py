@@ -62,6 +62,7 @@ class FileUtils:
         @staticmethod
         def to_numpy(o: np.ndarray, path: str, name: str = str(random.randint(a, b)), sep='/'):
             FileUtils.Dir.mkdir_here(path)
+            print(o)
             np.save(os.path.join(path, name), o)
 
         @staticmethod
@@ -106,9 +107,8 @@ class Cloud3dUtils:
             f = scan.field(ch)
             print(len(f))
             matrix_cloud.channels[field_names[ix]] = f
-        # x,y,z =  [c.flatten() for c in np.dsplit(xyz, 3)]
-        matrix_cloud.timestamps = np.tile(scan.timestamp, (scan.h, 1))
-        matrix_cloud.clouds[Ch.XYZ] = xyz
+        x, y, z = [c.flatten() for c in np.dsplit(xyz, 3)]
+        matrix_cloud.clouds[Ch.XYZ] = [x, y, z]
         return matrix_cloud
 
     @staticmethod
@@ -116,12 +116,18 @@ class Cloud3dUtils:
         # only store return signal intensity
         field_vals = matrix_cloud.channels[Ch.SIGNAL]
         field_vals = ArrayUtils.norm_zero_one(field_vals)
-
         # get all data as one H x W x n (inputs) int64 array
-        print(matrix_cloud.clouds[Ch.XYZ])
-        frame = np.dstack((matrix_cloud.clouds[Ch.XYZ], field_vals))
-        frame = client.destagger(metadata, frame)  # verify de-stagger
-        frame.reshape(-1, frame.shape[2])  # verify change
+        x = matrix_cloud.clouds[Ch.XYZ][0]
+        y = matrix_cloud.clouds[Ch.XYZ][1]
+        z = matrix_cloud.clouds[Ch.XYZ][2]
+        print(x)
+        print(matrix_cloud.clouds[Ch.XYZ][1].shape)
+        frame = np.array([x, y, z, np.zeros(x.shape[0])])
+
+        # frame = client.destagger(metadata, frame)  # verify de-stagger
+        print(frame.shape)
+        # frame.reshape(-1, frame.shape[2])  # verify change
+        # print(frame.shape)
         p = path if path is not None else def_numpy
         FileUtils.Output.to_numpy(frame, p)
 
@@ -155,7 +161,6 @@ class PcapUtils:
 
         for idx, scan in enumerate(scans):
             # copy per-column timestamps for each channel
-            timestamps = np.tile(scan.timestamp, (scan.h, 1))
             matrix_cloud = Cloud3dUtils.get_matrix_cloud(xyzlut, scan, Ch.channel_arr)
             Cloud3dUtils.to_pcdet(matrix_cloud, metadata)
 
