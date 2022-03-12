@@ -1,20 +1,19 @@
-import _io
-import io
 import threading
+import time
 from contextlib import closing
 from queue import Queue, Full
-from typing import List, Any
-import utils.utils as u
-import _thread as th
-import time
-from ouster import client, sdk, pcap
-import numpy as np
-from ouster.client import _client as cl, core, LidarPacket
+from typing import List
+
+from ouster import client, pcap
+from ouster import client as cl, LidarPacket
+
+from utilities.utils import FileUtils, Cloud3dUtils, Ch
 
 default_pcap: str = '/pcap'
 default_metadata: str = '/metadata'
 
-all_channels: list[cl.ChanField] = [cl.ChanField.RANGE, cl.ChanField.NEAR_IR, cl.ChanField.REFLECTIVITY]  # immutable
+
+# all_channels: list[cl.ChanField] = [cl.ChanField.RANGE, cl.ChanField.NEAR_IR, cl.ChanField.REFLECTIVITY]  # immutable
 
 
 class SensorCommand:
@@ -22,7 +21,7 @@ class SensorCommand:
 
 
 class StreamConfig:
-    sample_rate: int
+    sample_rate: int  # pause between scan sampling in seconds
     queue_size: int
     timer: bool
     time_end: int
@@ -43,11 +42,6 @@ class SensorParams:
         self.lidar_mode = config['lidar_mode']
         self.pcap_path = default_pcap
         self.metadat_path = default_metadata
-
-
-class MatrixCloud:
-    def __init__(self):
-        self.clouds = {}
 
 
 class _IO:
@@ -89,18 +83,18 @@ class _IO:
             self.metadata = cl.SensorInfo(f.read())
         return pcap.Pcap(self.pcap_path, self.metadata)
 
-    def stream_packets(self, queue: Queue[LidarPacket]):
+    def stream_packets(self, q: Queue):
         """Only LiDAR data! Read stream from pcap file. Less latency. More packet access.
          Packet does not represent full frame"""
         for packet in self.source:
             if isinstance(packet, LidarPacket):
                 try:
-                    queue.put_nowait(packet)
+                    q.put_nowait(packet)
                 except Full:
                     continue
 
-    def stream_scans(self, queue: Queue[MatrixCloud], config: dict,
-                     channels: list[cl.ChanField] = all_channels):
+    def stream_scans(self, q: Queue, config: dict,
+                     channels: List[int]):
         """
         Read SDK-controlled stream of lidar data. More latency.
          Incomplete & late frames are dropped from stream internally.
@@ -110,62 +104,50 @@ class _IO:
             xyzlut = cl.XYZLut(self.metadata)
             for scan in stream:
                 try:
-                    queue.put_nowait(self.__get_matrix_cloud(xyzlut, scan, channels))
+                    q.put_nowait(Cloud3dUtils.get_matrix_cloud(xyzlut, scan, Ch.channel_arr))
                 except Full:
                     time.sleep(1)
                     continue
                 time.sleep(config['sample_rate'])
 
-    @staticmethod
-    def __get_matrix_cloud(xyzlut: cl.XYZLut, scan,
-                           channels: list[cl.ChanField]) -> MatrixCloud:
-        """"Create separate XYZ point-clouds for separate channels.
-            Reading from cloud is done through dict destructuring.
-            For keys use the client.ChanFields RANGE | SIGNAL | NEAR_IR | REFLECTIVITY"""
-        matrix_cloud = MatrixCloud()
-        for channel in channels:
-            xyz = xyzlut(scan.field(channel))
-            x, y, z = [c.flatten() for c in np.dsplit(xyz, 3)]
-            matrix_cloud.clouds[channel] = [x, y, z]
-        return matrix_cloud
 
-
-default_sens_config = 'Sensor/sensor_config.yaml'
-default_stream_config = 'Sensor/stream_config.yaml'
+default_sens_config = 'sensor/sensor_config.yaml'
+default_stream_config = 'sensor/stream_config.yaml'
 
 
 class StreamThread(threading.Thread):
-    q: Queue[MatrixCloud]
+    q: Queue
     io: _IO
 
-    def __init__(self, _io: _IO, conf: dict):
+    def __init__(self, _io: _IO, conf: dict, channels: List[int]):
         threading.Thread.__init__(self)
         self.q = Queue(maxsize=conf['queue_size'])
         self.config = conf
         self.io = _io
+        self.channels = channels
 
     def run(self) -> None:
-        self.io.stream_scans(self.q, self.config)
+        self.io.stream_scans(self.q, self.config, channels=self.channels)
 
 
 class Sensor:
     _io: _IO
-    stream_config: StreamConfig = StreamConfig
     stream: StreamThread
+    channels: List[int] = [1, 2, 3, 4]
 
     def __init__(self, path=default_sens_config):
-        c_dict = u.FileUtils.load_file(path, ext='yaml')
+        c_dict = FileUtils.load_file(path, ext='yaml')
         self._io = _IO(c_dict)
 
-    def start_sensor(self):  # requires netcat
+    def start_sensor(self):  # requires netcat, tbd if implementation needed
         pass
 
     def stop_sensor(self):  # requires netcat
         pass
 
     def read_stream(self) -> StreamThread:
-        c_dict = u.FileUtils.load_file(default_stream_config, ext='yaml')
-        stream = StreamThread(self._io, c_dict)
+        c_dict = FileUtils.load_file(default_stream_config, ext='yaml')
+        stream = StreamThread(self._io, c_dict, self.channels)
         self.stream = stream
         stream.run()
         return stream

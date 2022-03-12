@@ -4,9 +4,9 @@ numba
 torch>=1.1
 tensorboardX
 easydict
+open3d
 pyyaml
 scikit-image
 tqdm
 ouster-sdk[examples]
-torchvision
-spconv-cu102
+spconv-cu113
