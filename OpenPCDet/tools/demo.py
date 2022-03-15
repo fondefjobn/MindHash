@@ -1,15 +1,21 @@
 import argparse
 import glob
 from pathlib import Path
+from time import sleep
+
+from open3d.cpu.pybind.geometry import Geometry
+from open3d.cpu.pybind.visualization import Visualizer
+
+from tools.visual_utils.open3d_vis_utils import draw_box
 
 try:
     import open3d
-    from visual_utils import open3d_vis_utils as V
+    from tools.visual_utils import open3d_vis_utils as V
 
     OPEN3D_FLAG = True
 except:
     import mayavi.mlab as mlab
-    from visual_utils import visualize_utils as V
+    from tools.visual_utils import visualize_utils as V
 
     OPEN3D_FLAG = False
 
@@ -20,6 +26,8 @@ from pcdet.config import cfg, cfg_from_yaml_file
 from pcdet.datasets import DatasetTemplate
 from pcdet.models import build_network, load_data_to_gpu
 from pcdet.utils import common_utils
+
+score_th: np.float = 0.85
 
 
 class DemoDataset(DatasetTemplate):
@@ -53,7 +61,6 @@ class DemoDataset(DatasetTemplate):
         else:
             raise NotImplementedError
 
-        print(points)
         input_dict = {
             'points': points,
             'frame_id': index,
@@ -78,6 +85,34 @@ def parse_config():
     return args, cfg
 
 
+def draw_scenes(vis: Visualizer, pts, points, gt_boxes=None, ref_boxes=None, ref_labels=None, ref_scores=None,
+                point_colors=None,
+                draw_origin=True):
+    if isinstance(points, torch.Tensor):
+        points = points.cpu().numpy()
+    if isinstance(gt_boxes, torch.Tensor):
+        gt_boxes = gt_boxes.cpu().numpy()
+    if isinstance(ref_boxes, torch.Tensor):
+        ref_boxes = ref_boxes.cpu().numpy()
+
+    pts.points = open3d.utility.Vector3dVector(points[:, :3])
+
+    if point_colors is None:
+        pts.colors = open3d.utility.Vector3dVector(np.ones((points.shape[0], 3)))
+    else:
+        pts.colors = open3d.utility.Vector3dVector(point_colors)
+
+    if gt_boxes is not None:
+        vis = draw_box(vis, gt_boxes, (0, 0, 1))
+
+    if ref_boxes is not None:
+        vis = draw_box(vis, ref_boxes, (0, 1, 0), ref_labels, ref_scores)
+
+    vis.update_geometry(pts)
+    vis.poll_events()
+    vis.update_renderer()
+
+
 def main():
     args, cfg = parse_config()
     logger = common_utils.create_logger()
@@ -92,23 +127,31 @@ def main():
     model.load_params_from_file(filename=args.ckpt, logger=logger, to_cpu=True)
     model.cuda()
     model.eval()
+    vis = Visualizer()
+    vis.create_window()
+    vis.get_render_option().point_size = 1.0
+    vis.get_render_option().background_color = np.zeros(3)
+    pts = open3d.geometry.PointCloud()
+    vis.add_geometry(pts)
     with torch.no_grad():
         for idx, data_dict in enumerate(demo_dataset):
             logger.info(f'Visualized sample index: \t{idx + 1}')
             data_dict = demo_dataset.collate_batch([data_dict])
             load_data_to_gpu(data_dict)
             pred_dicts, _ = model.forward(data_dict)
-            print(pred_dicts[0])
-            V.draw_scenes(
-                points=data_dict['points'][:, 1:], ref_boxes=pred_dicts[0]['pred_boxes'],
-                ref_scores=pred_dicts[0]['pred_scores'], ref_labels=pred_dicts[0]['pred_labels']
-            )
 
-            if not OPEN3D_FLAG:
-                mlab.show(stop=True)
-
+            draw_scenes(vis, pts, points=data_dict['points'][:, 1:], ref_boxes=pred_dicts[0]['pred_boxes'],
+                        ref_scores=pred_dicts[0]['pred_scores'],
+                        ref_labels=pred_dicts[0]['pred_labels'])
+            sleep(0.05)
     logger.info('Demo done.')
 
 
 if __name__ == '__main__':
     main()
+
+#
+# V.draw_scenes(
+#                points=data_dict['points'][:, 1:], ref_boxes=pred_dicts[0]['pred_boxes'],
+#                ref_scores=pred_dicts[0]['pred_scores'], ref_labels=pred_dicts[0]['pred_labels']
+#            )
