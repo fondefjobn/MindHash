@@ -29,12 +29,13 @@ for each input:
 """
 Description: <This function adds two numbers together>
 ---------------------------------
-someInput : <Integer>
-someOtherInput : <Integer>
+someParameter : <Integer>
+someOtherParameter : <Integer>
 ---------------------------------
 someOutput : <Integer>
 """
 
-def someFunction(someInput, someOtherInput):
-    someOutput = someInput + someOtherInput
+
+def someFunction(someParameter, someOtherParameter):
+    someOutput = someParameter + someOtherParameter
     return someOutput
