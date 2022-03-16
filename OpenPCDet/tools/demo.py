@@ -95,6 +95,9 @@ def draw_scenes(vis: Visualizer, pts, points, gt_boxes=None, ref_boxes=None, ref
     if isinstance(ref_boxes, torch.Tensor):
         ref_boxes = ref_boxes.cpu().numpy()
 
+
+    vis.add_geometry(pts)
+
     pts.points = open3d.utility.Vector3dVector(points[:, :3])
 
     if point_colors is None:
@@ -111,6 +114,7 @@ def draw_scenes(vis: Visualizer, pts, points, gt_boxes=None, ref_boxes=None, ref
     vis.update_geometry(pts)
     vis.poll_events()
     vis.update_renderer()
+    vis.clear_geometries()
 
 
 def main():
@@ -132,7 +136,6 @@ def main():
     vis.get_render_option().point_size = 1.0
     vis.get_render_option().background_color = np.zeros(3)
     pts = open3d.geometry.PointCloud()
-    vis.add_geometry(pts)
     with torch.no_grad():
         for idx, data_dict in enumerate(demo_dataset):
             logger.info(f'Visualized sample index: \t{idx + 1}')
