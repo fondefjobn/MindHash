@@ -8,4 +8,5 @@ pyyaml
 scikit-image
 tqdm
 torchvision
+spconv
 SharedArray

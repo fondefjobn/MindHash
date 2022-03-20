@@ -11,7 +11,10 @@ def_numpy: str = 'output/numpy'
 def_json: str = 'output/json'
 def_pcap: str = 'output/pcap_out'
 
-"""Utilities Module"""
+"""
+Utilities Module
+if classes become bloated we split per module
+"""
 
 
 class Ch:
@@ -62,7 +65,7 @@ class FileUtils:
         @staticmethod
         def to_numpy(o: np.ndarray, path: str, name: str = str(random.randint(a, b)), sep='/'):
             FileUtils.Dir.mkdir_here(path)
-            print(o)
+
             np.save(os.path.join(path, name), o)
 
         @staticmethod
@@ -112,7 +115,7 @@ class Cloud3dUtils:
         return matrix_cloud
 
     @staticmethod
-    def to_pcdet(matrix_cloud: MatrixCloud, metadata, path: str = None):
+    def to_pcdet(matrix_cloud: MatrixCloud, path: str = None):
         # only store return signal intensity
         field_vals = matrix_cloud.channels[Ch.SIGNAL]
         field_vals = ArrayUtils.norm_zero_one(field_vals)
@@ -120,16 +123,14 @@ class Cloud3dUtils:
         x = matrix_cloud.clouds[Ch.XYZ][0]
         y = matrix_cloud.clouds[Ch.XYZ][1]
         z = matrix_cloud.clouds[Ch.XYZ][2]
-        print(x)
-        print(matrix_cloud.clouds[Ch.XYZ][1].shape)
         frame = np.array([x, y, z, np.zeros(x.shape[0])])
 
         # frame = client.destagger(metadata, frame)  # verify de-stagger
-        print(frame.shape)
         # frame.reshape(-1, frame.shape[2])  # verify change
         # print(frame.shape)
-        p = path if path is not None else def_numpy
-        FileUtils.Output.to_numpy(frame, p)
+        if path is None:
+            return frame
+        FileUtils.Output.to_numpy(frame, path)
 
 
 class ArrayUtils:
@@ -162,7 +163,7 @@ class PcapUtils:
         for idx, scan in enumerate(scans):
             # copy per-column timestamps for each channel
             matrix_cloud = Cloud3dUtils.get_matrix_cloud(xyzlut, scan, Ch.channel_arr)
-            Cloud3dUtils.to_pcdet(matrix_cloud, metadata)
+            Cloud3dUtils.to_pcdet(matrix_cloud)
 
 
 def pcap_to_npy(source: client.PacketSource,
