@@ -20,8 +20,6 @@ class ConfigMap:
 ################
 Cm = ConfigMap
 Q = Queue
-
-
 ################
 
 

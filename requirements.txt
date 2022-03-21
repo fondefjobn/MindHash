@@ -3,8 +3,10 @@ llvmlite
 numba
 tensorboardX
 easydict
+open3d==0.13.0
 pyyaml
 scikit-image
 tqdm
-open3d==0.13.0
+ouster-sdk[examples]
 spconv-cu114
+SharedArray

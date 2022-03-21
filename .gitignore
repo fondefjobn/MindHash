@@ -11,6 +11,9 @@ __pycache__/
 
 *.json
 
+# Checkpoint models
+*.pth
+
 # Distribution / packaging
 .Python
 build/

@@ -1,6 +1,6 @@
 # Getting Started
-The dataset configs are located within [tools/cfgs/dataset_configs](../tools/cfgs/dataset_configs), 
-and the model configs are located within [tools/cfgs](../tools/cfgs) for different datasets. 
+The dataset configs are located within [tools/cfgs/dataset_configs](../../tools/cfgs/dataset_configs), 
+and the model configs are located within [tools/cfgs](../../tools/cfgs) for different datasets. 
 
 
 ## Dataset Preparation
@@ -9,7 +9,7 @@ Currently we provide the dataloader of KITTI dataset and NuScenes dataset, and t
 
 ### KITTI Dataset
 * Please download the official [KITTI 3D object detection](http://www.cvlibs.net/datasets/kitti/eval_object.php?obj_benchmark=3d) dataset and organize the downloaded files as follows (the road planes could be downloaded from [[road plane]](https://drive.google.com/file/d/1d5mq0RXRnvHPVeKx6Q612z0YRO1t2wAp/view?usp=sharing), which are optional for data augmentation in the training):
-* If you would like to train [CaDDN](../tools/cfgs/kitti_models/CaDDN.yaml), download the precomputed [depth maps](https://drive.google.com/file/d/1qFZux7KC_gJ0UHEg-qGJKqteE9Ivojin/view?usp=sharing) for the KITTI training set
+* If you would like to train [CaDDN](../../tools/cfgs/kitti_models/CaDDN.yaml), download the precomputed [depth maps](https://drive.google.com/file/d/1qFZux7KC_gJ0UHEg-qGJKqteE9Ivojin/view?usp=sharing) for the KITTI training set
 * NOTE: if you already have the data infos from `pcdet v0.1`, you can choose to use the old infos and set the DATABASE_WITH_FAKELIDAR option in tools/cfgs/dataset_configs/kitti_dataset.yaml as True. The second choice is that you can create the infos and gt database again and leave the config unchanged.
 
 ```
@@ -108,7 +108,9 @@ OpenPCDet
 │   ├── lyft
 │   │   │── ImageSets
 │   │   │── trainval
-│   │   │   │── data & maps & images & lidar & train_lidar
+│   │   │   │── data & maps(train_maps) & images(train_images) & lidar(train_lidar) & train_lidar
+│   │   │── test
+│   │   │   │── data & maps(test_maps) & test_images & test_lidar
 ├── pcdet
 ├── tools
 ```
@@ -118,17 +120,22 @@ OpenPCDet
 pip install -U lyft_dataset_sdk==0.0.8
 ```
 
-* Generate the data infos by running the following command (it may take several hours): 
+* Generate the training & validation data infos by running the following command (it may take several hours): 
 ```python 
 python -m pcdet.datasets.lyft.lyft_dataset --func create_lyft_infos \
     --cfg_file tools/cfgs/dataset_configs/lyft_dataset.yaml
+```
+* Generate the test data infos by running the following command: 
+```python 
+python -m pcdet.datasets.lyft.lyft_dataset --func create_lyft_infos \
+    --cfg_file tools/cfgs/dataset_configs/lyft_dataset.yaml --version test
 ```
 
 * You need to check carefully since we don't provide a benchmark for it.
 
 
 ## Pretrained Models
-If you would like to train [CaDDN](../tools/cfgs/kitti_models/CaDDN.yaml), download the pretrained [DeepLabV3 model](https://download.pytorch.org/models/deeplabv3_resnet101_coco-586e9e4e.pth) and place within the `checkpoints` directory. Please make sure the [kornia](https://github.com/kornia/kornia) is installed since it is needed for `CaDDN`.
+If you would like to train [CaDDN](../../tools/cfgs/kitti_models/CaDDN.yaml), download the pretrained [DeepLabV3 model](https://download.pytorch.org/models/deeplabv3_resnet101_coco-586e9e4e.pth) and place within the `checkpoints` directory. Please make sure the [kornia](https://github.com/kornia/kornia) is installed since it is needed for `CaDDN`.
 ```
 OpenPCDet
 ├── checkpoints

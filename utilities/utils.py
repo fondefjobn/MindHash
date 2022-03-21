@@ -1,5 +1,8 @@
 import os
 import random
+import sys
+
+from numpy import ndarray
 from ouster import client as cl
 import yaml
 from typing import List
@@ -7,6 +10,7 @@ from yaml import SafeLoader
 import numpy as np
 from ouster import client, pcap
 
+np.set_printoptions(threshold=sys.maxsize)
 def_numpy: str = 'output/numpy'
 def_json: str = 'output/json'
 def_pcap: str = 'output/pcap_out'
@@ -63,10 +67,14 @@ class FileUtils:
         b: int = a ** 2
 
         @staticmethod
-        def to_numpy(o: np.ndarray, path: str, name: str = str(random.randint(a, b)), sep='/'):
+        def to_numpy(l: List[np.ndarray], path: str, names: List[str] = None, sep='/'):
             FileUtils.Dir.mkdir_here(path)
-
-            np.save(os.path.join(path, name), o)
+            if not names:
+                for ix,o in enumerate(l):
+                    np.save(os.path.join(path, str(ix)), o)
+            else:
+                for ix,o in enumerate(l):
+                    o.tofile(os.path.join(path, names[ix]))
 
         @staticmethod
         def to_json():
@@ -100,37 +108,32 @@ class Cloud3dUtils:
             Reading from cloud is done through dict destructuring.
             For keys use the client.ChanFields RANGE | SIGNAL | NEAR_IR | REFLECTIVITY"""
         matrix_cloud = MatrixCloud()
-        #  x, y, z =
         field_names = channel_arr
 
         # use integer mm to avoid loss of precision casting timestamps
-        xyz = (xyzlut(scan) * 1000).astype(np.int64)
+        xyz = (xyzlut(scan.field(cl.ChanField.RANGE))).astype(float)
 
         for ix, ch in enumerate(scan.fields):
             f = scan.field(ch)
-            print(len(f))
             matrix_cloud.channels[field_names[ix]] = f
         x, y, z = [c.flatten() for c in np.dsplit(xyz, 3)]
         matrix_cloud.clouds[Ch.XYZ] = [x, y, z]
         return matrix_cloud
 
     @staticmethod
-    def to_pcdet(matrix_cloud: MatrixCloud, path: str = None):
+    def to_pcdet(matrix_cloud: MatrixCloud):
         # only store return signal intensity
         field_vals = matrix_cloud.channels[Ch.SIGNAL]
-        field_vals = ArrayUtils.norm_zero_one(field_vals)
+        # field_vals = ArrayUtils.norm_zero_one(field_vals)
         # get all data as one H x W x n (inputs) int64 array
         x = matrix_cloud.clouds[Ch.XYZ][0]
         y = matrix_cloud.clouds[Ch.XYZ][1]
         z = matrix_cloud.clouds[Ch.XYZ][2]
-        frame = np.array([x, y, z, np.zeros(x.shape[0])])
-
+        frame = np.column_stack((x, y, z, np.zeros(x.shape[0], dtype=float)))
         # frame = client.destagger(metadata, frame)  # verify de-stagger
         # frame.reshape(-1, frame.shape[2])  # verify change
         # print(frame.shape)
-        if path is None:
-            return frame
-        FileUtils.Output.to_numpy(frame, path)
+        return frame
 
 
 class ArrayUtils:
@@ -148,7 +151,8 @@ class PcapUtils:
                       num: int = 0,
                       npy_dir: str = ".",
                       npy_base: str = "pcap_out",
-                      npy_ext: str = "npy") -> None:
+                      npy_ext: str = "npy",
+                      path: str = None) -> List[ndarray]:
 
         # [doc-stag-pcap-to-csv]
         from itertools import islice
@@ -159,17 +163,20 @@ class PcapUtils:
         scans = iter(client.Scans(source))
         if num:
             scans = islice(scans, num)
-
+        frame_list: List[np.ndarray] = []
         for idx, scan in enumerate(scans):
-            # copy per-column timestamps for each channel
             matrix_cloud = Cloud3dUtils.get_matrix_cloud(xyzlut, scan, Ch.channel_arr)
-            Cloud3dUtils.to_pcdet(matrix_cloud)
+            frame_list.append(Cloud3dUtils.to_pcdet(matrix_cloud))
+        if path:
+            FileUtils.Output.to_numpy(frame_list, path)
+        else:
+            return frame_list
 
 
 def pcap_to_npy(source: client.PacketSource,
                 metadata: client.SensorInfo,
                 num: int = 0):
-    PcapUtils.pcap_to_pcdet(source, metadata, num)
+    return PcapUtils.pcap_to_pcdet(source, metadata, num)
 
 
 parserMap = {
@@ -187,11 +194,10 @@ outputMap = {
 
 
 def main():
-    with open('../pcaps/OS1-32BH_sample.json', 'r') as f:
+    with open('../pcap/OS1-128_Rev-05_Urban-Drive.json', 'r') as f:
         metadata = client.SensorInfo(f.read())
-    source = pcap.Pcap('../pcaps/OS1-32BH_fw2-1_sampledata.pcap', metadata)
-
-    PcapUtils.pcap_to_pcdet(source, metadata, num=1)
+        source = pcap.Pcap('../pcap/OS1-128_Rev-05_Urban-Drive.pcap', metadata)
+        PcapUtils.pcap_to_pcdet(source, metadata, num=100, path=def_numpy)
 
 
 if __name__ == "__main__":

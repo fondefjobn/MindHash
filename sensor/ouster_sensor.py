@@ -4,37 +4,13 @@ import time
 from contextlib import closing
 from queue import Queue, Full
 from typing import List
-
 from ouster import client as cl, pcap
 from ouster.client import LidarPacket
 from utilities.utils import FileUtils, Cloud3dUtils, Ch, MatrixCloud
-
 default_pcap: str = '/pcap'
 default_metadata: str = '/metadata'
 
 # all_channels: list[cl.ChanField] = [cl.ChanField.RANGE, cl.ChanField.NEAR_IR, cl.ChanField.REFLECTIVITY]  # immutable
-
-meta = {"prod_line": "OS-1-16-A2", "prod_pn": "840-101855-02", "prod_sn": "991937000749",
-        "image_rev": "ousteros-image-prod-aries-v2.2.1+20220215193703.patch-v2.2.1", "build_rev": "v2.2.1",
-        "build_date": "2022-02-15T19:39:39Z", "status": "RUNNING", "initialization_id": 2573178, "base_pn": "",
-        "base_sn": "", "proto_rev": "", "udp_ip": "192.168.178.255", "udp_dest": "192.168.178.25",
-        "udp_port_lidar": 7502,
-        "udp_port_imu": 7503, "udp_profile_lidar": "LEGACY", "udp_profile_imu": "LEGACY",
-        "columns_per_packet": 16, "timestamp_mode": "TIME_FROM_PTP_1588", "sync_pulse_in_polarity": "ACTIVE_LOW",
-        "nmea_in_polarity": "ACTIVE_HIGH", "nmea_ignore_valid_char": 0, "nmea_baud_rate": "BAUD_9600",
-        "nmea_leap_seconds": 0, "multipurpose_io_mode": "OFF", "sync_pulse_out_polarity": "ACTIVE_HIGH",
-        "sync_pulse_out_frequency": 1, "sync_pulse_out_angle": 360, "sync_pulse_out_pulse_width": 0,
-        "auto_start_flag": 1, "operating_mode": "NORMAL", "lidar_mode": "2048x10", "azimuth_window": [0, 360000],
-        "signal_multiplier": 1, "phase_lock_enable": False, "phase_lock_offset": 0,
-        "beam_altitude_angles": [15.893000000000001, 13.715999999999999, 11.585000000000001, 9.4779999999999998,
-                                 7.3789999999999996, 5.2919999999999998, 3.2029999999999998, 1.1279999999999999,
-                                 -0.95799999999999996, -3.0470000000000002, -5.1269999999999998, -7.218,
-                                 -9.3179999999999996, -11.42, -13.548999999999999, -15.718999999999999],
-        "beam_azimuth_angles": [0.91600000000000004, 0.93000000000000005, 0.92100000000000004, 0.93600000000000005,
-                                0.93300000000000005, 0.95699999999999996, 0.98199999999999998, 0.99099999999999999,
-                                1.0249999999999999, 1.0329999999999999, 1.0780000000000001, 1.1040000000000001,
-                                1.1439999999999999, 1.1779999999999999, 1.222, 1.2849999999999999]}
-
 
 class SensorCommand:
     pass
@@ -73,14 +49,12 @@ class _IO:
         self.config.udp_port_lidar = 7502
         self.config.udp_port_imu = 7503
         self.config.operating_mode = cl.OperatingMode.OPERATING_NORMAL
-        self.config.lidar_mode = cl.LidarMode.MODE_1024x10
-        self.config.udp_dest = ''
+        self.config.lidar_mode = cl.LidarMode.MODE_2048x10
         self.pcap_path = params.pcap_path
         self.meta_path = params.metadat_path
-        self.config.udp_dest = '255.255.255.255'
-        # cl.set_config(self.host, self.config)
+        cl.set_config(self.host, self.config)
         self.__set_paths()
-        # self.__get_source()
+        self.__get_source()
 
     def __set_paths(self, sep='/'):
         pcap_p = self.pcap_path
@@ -94,7 +68,7 @@ class _IO:
         pass
 
     def __fetch_meta(self):
-        with closing(cl.Sensor(hostname=self.host, lidar_port=7502)) as source:
+        with closing(cl.Sensor(hostname=self.host)) as source:
             source.write_metadata(self.meta_path)
 
     def __get_source(self):
@@ -118,9 +92,7 @@ class _IO:
         Read SDK-controlled stream of lidar data. More latency.
          Incomplete & late frames are dropped from stream internally.
          """
-        sensor_info = cl.SensorInfo(json.dumps(meta))
         with closing(cl.Scans.stream(self.host, self.config.udp_port_lidar,
-                                     metadata=sensor_info,
                                      complete=False)) as stream:
             xyzlut = cl.XYZLut(self.metadata)
             for scan in stream:
@@ -170,7 +142,7 @@ class Sensor:
             self.stream.join()
 
 
-sensor_ip = '169.254.132.100'
+sensor_ip = '192.168.178.11'
 sensor_port = 7502
 
 

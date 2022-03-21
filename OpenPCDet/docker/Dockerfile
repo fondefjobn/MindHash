@@ -5,7 +5,7 @@ RUN echo 'debconf debconf/frontend select Noninteractive' | debconf-set-selectio
 # Install basics
 RUN apt-get update -y \
     && apt-get install build-essential \
-    && apt-get install -y apt-utilities git curl ca-certificates bzip2 tree htop wget \
+    && apt-get install -y apt-utils git curl ca-certificates bzip2 tree htop wget \
     && apt-get install -y libglib2.0-0 libsm6 libxext6 libxrender-dev bmon iotop g++ python3.7 python3.7-dev python3.7-distutils
 
 # Install cmake v3.13.2

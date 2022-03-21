@@ -36,7 +36,7 @@ y-axis points towards to the left direction, and z-axis points towards to the to
 4. Run the demo with a pretrained model (e.g. PV-RCNN) and your custom point cloud data as follows:
 ```shell
 python demo.py --cfg_file cfgs/kitti_models/pv_rcnn.yaml \
-    --ckpt pv_rcnn_8369.pth \
+    --ckpt pv_rcnn.pth \
     --data_path ${POINT_CLOUD_DATA}
 ```
 Here `${POINT_CLOUD_DATA}` could be in any of the following format: 
