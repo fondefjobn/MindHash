@@ -54,6 +54,7 @@ class _IO:
         self.meta_path = params.metadat_path
         cl.set_config(self.host, self.config)
         self.__set_paths()
+        self.__fetch_meta()
         self.__get_source()
 
     def __set_paths(self, sep='/'):
@@ -72,10 +73,9 @@ class _IO:
             source.write_metadata(self.meta_path)
 
     def __get_source(self):
-        self.__fetch_meta()
         with open(self.pcap_path, 'r') as f:
             self.metadata = cl.SensorInfo(f.read())
-        # return pcap.Pcap(self.pcap_path, self.metadata)
+        return pcap.Pcap(self.pcap_path, self.metadata)
 
     def stream_packets(self, q: Queue):
         """Only LiDAR data! Read stream from pcap file. Less latency. More packet access.

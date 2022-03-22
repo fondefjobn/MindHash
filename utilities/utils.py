@@ -11,9 +11,9 @@ import numpy as np
 from ouster import client, pcap
 
 np.set_printoptions(threshold=sys.maxsize)
-def_numpy: str = 'output/numpy'
-def_json: str = 'output/json'
-def_pcap: str = 'output/pcap_out'
+def_numpy: str = '../resources/output/numpy'
+def_json: str = '../resources/output/json'
+def_pcap: str = '../resources/output/pcap_out'
 
 """
 Utilities Module
@@ -45,7 +45,19 @@ class FileUtils:
                 return None
 
     @staticmethod
-    def safeParsing(path: str, parse_f, out=None, *args, **kwargs):
+    def safe_parsing(path: str, parse_f, out=None, *args, **kwargs):
+        """
+        Function executing any parsing method to load files
+        If `out` is specified, execute specific output function
+        otherwise returns the parsed values
+        Parameters
+        ----------
+        path
+        parse_f
+        out
+        args
+        kwargs
+        """
         try:
             with open(path) as f:
                 if out is not None:
@@ -56,24 +68,20 @@ class FileUtils:
             return None
 
     @staticmethod
-    def parseYaml(path: str, output=None):
-        return FileUtils.safeParsing(path, yaml.load, out=output, Loader=SafeLoader)
+    def parse_yaml(path: str, output=None):
+        return FileUtils.safe_parsing(path, yaml.load, out=output, Loader=SafeLoader)
 
     class Output:
         """Convert objects and save in specified file format"""
 
-        # random file output names
-        a: int = 2 ** 5
-        b: int = a ** 2
-
         @staticmethod
-        def to_numpy(l: List[np.ndarray], path: str, names: List[str] = None, sep='/'):
+        def to_numpy(frame_ls: List[np.ndarray], path: str, names: List[str] = None):
             FileUtils.Dir.mkdir_here(path)
             if not names:
-                for ix,o in enumerate(l):
+                for ix, o in enumerate(frame_ls):
                     np.save(os.path.join(path, str(ix)), o)
             else:
-                for ix,o in enumerate(l):
+                for ix, o in enumerate(frame_ls):
                     o.tofile(os.path.join(path, names[ix]))
 
         @staticmethod
@@ -123,7 +131,7 @@ class Cloud3dUtils:
     @staticmethod
     def to_pcdet(matrix_cloud: MatrixCloud):
         # only store return signal intensity
-        field_vals = matrix_cloud.channels[Ch.SIGNAL]
+        # field_vals = matrix_cloud.channels[Ch.SIGNAL]
         # field_vals = ArrayUtils.norm_zero_one(field_vals)
         # get all data as one H x W x n (inputs) int64 array
         x = matrix_cloud.clouds[Ch.XYZ][0]
@@ -180,7 +188,7 @@ def pcap_to_npy(source: client.PacketSource,
 
 
 parserMap = {
-    'yaml': FileUtils.parseYaml,
+    'yaml': FileUtils.parse_yaml,
     'csv': None,
     'las': None,
     'json': None,
@@ -188,16 +196,16 @@ parserMap = {
 }
 
 outputMap = {
-    'numpy': FileUtils.Output.to_numpy,
+    'npy': FileUtils.Output.to_numpy,
     'json': FileUtils.Output.to_json
 }
 
 
 def main():
-    with open('../pcap/OS1-128_Rev-05_Urban-Drive.json', 'r') as f:
+    with open('../resources/pcap/OS1-128_Rev-05_Urban-Drive.json', 'r') as f:
         metadata = client.SensorInfo(f.read())
-        source = pcap.Pcap('../pcap/OS1-128_Rev-05_Urban-Drive.pcap', metadata)
-        PcapUtils.pcap_to_pcdet(source, metadata, num=100, path=def_numpy)
+        source = pcap.Pcap('../resources/pcap/OS1-128_Rev-05_Urban-Drive.pcap', metadata)
+        PcapUtils.pcap_to_pcdet(source, metadata, num=1, path=def_numpy)
 
 
 if __name__ == "__main__":

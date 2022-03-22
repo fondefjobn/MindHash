@@ -58,7 +58,7 @@ class StreamProcessor:
         self._load_config(cfg_path)
 
     def _load_config(self, cfg_path):
-        self.config = Fs.parseYaml(cfg_path)
+        self.config = Fs.parse_yaml(cfg_path)
 
     def read_stream(self):
         self.process = ProcessThread(self.in_queue, self.config)
