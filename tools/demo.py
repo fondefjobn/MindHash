@@ -1,6 +1,8 @@
 import argparse
 import glob
+import json
 import sys
+import pickle
 from pathlib import Path
 from time import sleep
 from open3d.cpu.pybind.visualization import Visualizer
@@ -14,16 +16,15 @@ try:
 except:
     import mayavi.mlab as mlab
     from tools.visual_utils import visualize_utils as V, open3d_vis_utils as V
+
     OPEN3D_FLAG = False
 
 import numpy as np
 import torch
-
+import tensorboardX
 from pcdet.datasets import DatasetTemplate
 from pcdet.models import build_network, load_data_to_gpu
 from pcdet.utils import common_utils
-np.set_printoptions(threshold=sys.maxsize)
-score_th: np.float = 0.85
 
 
 class DemoDataset(DatasetTemplate):
@@ -136,7 +137,13 @@ def main():
             data_dict = demo_dataset.collate_batch([data_dict])
             load_data_to_gpu(data_dict)
             pred_dicts, _ = model.forward(data_dict)
-            print(pred_dicts[0])
+            with open('../resources/output/json/out.json', 'w') as f:
+                o = {
+                    'ref_boxes': pred_dicts[0]['pred_boxes'].cpu().tolist(),
+                    'ref_scores': pred_dicts[0]['pred_scores'].cpu().tolist(),
+                    'ref_labels': pred_dicts[0]['pred_labels'].cpu().tolist()
+                }
+                json.dump(o, f)
             draw_scenes(vis, pts, points=data_dict['points'][:, 1:], ref_boxes=pred_dicts[0]['pred_boxes'],
                         ref_scores=pred_dicts[0]['pred_scores'],
                         ref_labels=pred_dicts[0]['pred_labels'])
