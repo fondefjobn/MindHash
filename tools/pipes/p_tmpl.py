@@ -14,6 +14,8 @@ class GlobalDictionary:
     MatrixCloud = property(doc='')
     ModelName = property(doc="")
     ProcessedQueue = property(doc="MatrixCloud conversion to ML model dataset input format")
+    Statistics = property(doc="Statistic module output for all frames, updated during data processing."
+                              " Refer to module for dict documentation")
     Success = property(doc='Pipeline step state True if completed without exceptions')
     Step = property(doc="current pipeline step")
     Host = property(doc='hostname')
@@ -69,7 +71,7 @@ class Pipeline(ABC):
 
     def update(self, old_state: State):
         """
-
+        Merge states (updates matching values at shallow level)
         Parameters
         ----------
         old_state

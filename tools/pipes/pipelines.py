@@ -14,7 +14,7 @@ from visualizer.viz_module import Visualization
 Tool module for building pipeline execution of functions
 Idea: The behavior of the execution is split in modules.
 Module execution input arguments vary, how to chain execution safe & clean?
-Solution: Separate routine sharing states
+Solution: Sequential execution of separate routines sharing one state
 """
 
 """
@@ -39,6 +39,22 @@ def __generate_list__(args) -> List[Tuple[str, Pipeline]]:
 
 
 def execute_pipeline(ls_pl: List[Pipeline]):
+    """
+    Iterate over all routines and execute all.
+    Blocking routines do not use multiprocessing (multithreading)
+    Non-Blocking create a separate process with multiprocessing lib
+    The state is shared by routines in a list
+    A routine uses the state of the previous one which defines current
+    state
+    Important: Strive for shallow state values (e.g. non-nested dicts, wrapper classes)
+    Parameters
+    ----------
+    ls_pl
+
+    Returns
+    -------
+
+    """
     init = ls_pl[0]
     init.execute(init.state)
     for ix, pl in enumerate(ls_pl[1:]):
