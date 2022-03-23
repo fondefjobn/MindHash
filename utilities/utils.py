@@ -10,6 +10,8 @@ from yaml import SafeLoader
 import numpy as np
 from ouster import client, pcap
 
+from tools.pipes.p_tmpl import Pipeline,State
+
 np.set_printoptions(threshold=sys.maxsize)
 def_numpy: str = '../resources/output/numpy'
 def_json: str = '../resources/output/json'
@@ -19,6 +21,20 @@ def_pcap: str = '../resources/output/pcap_out'
 Utilities Module
 if classes become bloated we split per module
 """
+
+
+class PcapProcess(Pipeline):
+
+    def execute(self, prev):
+        super().execute(prev)
+        super().update(prev)
+
+
+class ExportLocal(Pipeline):
+
+    def execute(self, prev):
+        super().execute(prev)
+        super().update(prev)
 
 
 class Ch:

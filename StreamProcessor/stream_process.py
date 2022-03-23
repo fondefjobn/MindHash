@@ -1,5 +1,7 @@
 from threading import Thread
 from queue import Queue
+
+from tools.pipes.p_tmpl import Pipeline
 from utilities.utils import FileUtils as Fs, \
     MatrixCloud as MxCloud, Cloud3dUtils
 from numpy import ndarray
@@ -20,14 +22,23 @@ class ConfigMap:
 ################
 Cm = ConfigMap
 Q = Queue
+
+
 ################
+
+class QueueProcessor(Pipeline):
+
+    def execute(self, prev):
+        super().execute(prev)
+        # code goes here
+        super().update(prev)
 
 
 class ProcessThread(Thread):
-    in_queue: Q[MxCloud]
-    out_queue: Q[ndarray]
+    in_queue: "Q[MxCloud]"
+    out_queue:"Q[ndarray]"
 
-    def __init__(self, q: Q[MxCloud], conf: dict):
+    def __init__(self, q: "Q[MxCloud]", conf: dict):
         super().__init__()
         self.config = conf
         self.in_queue = q
@@ -50,10 +61,10 @@ class StreamProcessor:
     config: dict = None
     idle: bool = False
     process: ProcessThread = None
-    in_queue: Q[MxCloud]
-    out_queue: Q[ndarray]
+    in_queue: "Q[MxCloud]"
+    out_queue: "Q[ndarray]"
 
-    def __init__(self, queue: Q[MxCloud], cfg_path):
+    def __init__(self, queue: "Q[MxCloud]", cfg_path):
         self.in_queue = queue
         self._load_config(cfg_path)
 
