@@ -36,7 +36,7 @@ class QueueProcessor(Pipeline):
 
 class ProcessThread(Thread):
     in_queue: "Q[MxCloud]"
-    out_queue:"Q[ndarray]"
+    out_queue: "Q[ndarray]"
 
     def __init__(self, q: "Q[MxCloud]", conf: dict):
         super().__init__()

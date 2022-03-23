@@ -8,12 +8,6 @@ after MVP completion:
 *interactive 
 """
 
-arg_dict: dict = {
-    'live': SControl.connect
-}
-
-
-
 
 def parse_config():
     parser = argparse.ArgumentParser(description='StreetAnalytics Project CLI')
@@ -21,6 +15,8 @@ def parse_config():
                         help='Live-stream processing mode', action="store_true")
     parser.add_argument('--post', default=None,
                         help='post-process mode', action="store_true")
+    parser.add_argument('--eval', default=None,
+                        help='Evaluate input with a ML Model', action="store_true")
     parser.add_argument('--host', type=str, default=None, help='Sensor hostname')
     parser.add_argument('--port', type=str, default=None, help='Sensor port')
     parser.add_argument('--ml', type=str, default='PVRCNN', choices=['PVRCNN'],

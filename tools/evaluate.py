@@ -5,6 +5,7 @@ from pathlib import Path
 from time import sleep
 from open3d.cpu.pybind.visualization import Visualizer
 from pcdet.config import cfg, cfg_from_yaml_file
+from tools.pipes.p_tmpl import Pipeline, State
 from tools.visual_utils.open3d_vis_utils import draw_box
 
 try:
@@ -22,6 +23,15 @@ import torch
 from pcdet.datasets import DatasetTemplate
 from pcdet.models import build_network, load_data_to_gpu
 from pcdet.utils import common_utils
+
+
+class Evaluate(Pipeline):
+
+    def execute(self, prev: State):
+        super().execute(prev)
+
+        # code goes here
+        super().update(prev)
 
 
 class DemoDataset(DatasetTemplate):
