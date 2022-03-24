@@ -33,8 +33,8 @@ class SensorParams:
     def __init__(self, config: dict):  # change to YML parser
         self.host = config['hostname']
         self.lidar_port = config['lidar_port']
-        #        self.imu_port = config['imu_port']
-        #        self.op_mode = config['operating_mode']
+        #       self.imu_port = config['imu_port']
+        #       self.op_mode = config['operating_mode']
         #       self.lidar_mode = config['lidar_mode']
         self.pcap_path = default_pcap
         self.metadat_path = default_metadata

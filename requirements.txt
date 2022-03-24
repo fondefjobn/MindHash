@@ -1,6 +1,7 @@
 numpy
 llvmlite
 numba
+wrapt
 tensorboardX
 easydict
 open3d==0.13.0
