@@ -21,7 +21,8 @@ class PopList(List):
     https://docs.python.org/3.8/library/threading.html#using-locks-conditions-and-semaphores-in-the-with-statement
 
 
-    Note: Must be used only within Context Manager (with statement)
+    Note: Must be used only within Context Manager
+    (with statement) of the PopList instance's Condition object
     Note: Not yet tested
     """
     __full__: bool
