@@ -158,7 +158,7 @@ class PandasetDataset(DatasetTemplate):
         device = self.dataset_cfg.get('LIDAR_DEVICE', 0)
         if device != -1:
             lidar_frame = lidar_frame[lidar_frame.d == device]
-        world_points = lidar_frame.to_numpy()
+        world_points = lidar_frame.to_numpy_bulk()
         # There seems to be issues with the automatic deletion of pandas datasets sometimes
         del lidar_frame
 
@@ -196,14 +196,14 @@ class PandasetDataset(DatasetTemplate):
             # keep cuboids that are seen by a given device
             cuboids = cuboids[cuboids["cuboids.sensor_id"] != 1 - device]
 
-        xs = cuboids['position.x'].to_numpy()
-        ys = cuboids['position.y'].to_numpy()
-        zs = cuboids['position.z'].to_numpy()
-        dxs = cuboids['dimensions.x'].to_numpy()
-        dys = cuboids['dimensions.y'].to_numpy()
-        dzs = cuboids['dimensions.z'].to_numpy()
-        yaws = cuboids['yaw'].to_numpy()
-        labels = cuboids['label'].to_numpy()
+        xs = cuboids['position.x'].to_numpy_bulk()
+        ys = cuboids['position.y'].to_numpy_bulk()
+        zs = cuboids['position.z'].to_numpy_bulk()
+        dxs = cuboids['dimensions.x'].to_numpy_bulk()
+        dys = cuboids['dimensions.y'].to_numpy_bulk()
+        dzs = cuboids['dimensions.z'].to_numpy_bulk()
+        yaws = cuboids['yaw'].to_numpy_bulk()
+        labels = cuboids['label'].to_numpy_bulk()
 
         del cuboids  # There seem to be issues with the automatic deletion of pandas datasets sometimes
 

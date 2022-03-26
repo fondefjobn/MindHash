@@ -1,7 +1,8 @@
+import logging
 import os
 import random
 import sys
-
+import logging
 from numpy import ndarray
 from ouster import client as cl
 import yaml
@@ -13,7 +14,6 @@ from ouster import client, pcap
 from tools.pipes.p_tmpl import Pipeline, State, GlobalDictionary as Gb
 from utilities.custom_structs import PopList
 
-np.set_printoptions(threshold=sys.maxsize)
 def_numpy: str = '../resources/output/numpy'
 def_json: str = '../resources/output/json'
 def_pcap: str = '../resources/output/pcap_out'
@@ -25,24 +25,45 @@ if classes become bloated we split per module
 
 
 class PLRoutines:
+
+    logging.basicConfig(format='%(levelname)s:%(message)s', level=logging.INFO)
+
     class PcapProcess(Pipeline):
+        """
+        Routine: PCAP File process
+
+        Produces: PcapList
+
+        Consumes: None
+
+        Requires: Pcap path
+        """
+        produce = {Gb.PcapList}
 
         def run(self):
             super().run()
             pop_ls = PopList()
             self.state[Gb.PcapList] = pop_ls
-            x: int = 0
-            while x < 100:
-                pop_ls.add(random.randint(10, 100))
-                x += 1
-                print('+')
-
+            with open(self.state.args.meta, 'r') as f:
+                metadata = client.SensorInfo(f.read())
+                source = pcap.Pcap(self.state.args.pcap, metadata)
+                PcapUtils.pcap_to_pcdet(source, metadata, num=100, frame_ls=pop_ls)
+                pop_ls.set_full(True)
+            logging.info(msg='PcapProcess: done')
 
     class ExportLocal(Pipeline):
+        consume = {Gb.PcapList}
 
         def run(self):
             super().run()
-            # code goes here
+            pop_ls: PopList = self.state[Gb.PcapList]
+            x = 0
+            FileUtils.Dir.mkdir_here(def_numpy)
+            while x < len(pop_ls) or not pop_ls.full():
+                out = pop_ls.get(x, self.event)
+                FileUtils.Output.to_numpy(out, def_numpy, str(x))
+                x += 1
+            logging.info(msg='Export: done')
 
 
 class Ch:
@@ -99,7 +120,7 @@ class FileUtils:
         """Convert objects and save in specified file format"""
 
         @staticmethod
-        def to_numpy(frame_ls: List[np.ndarray], path: str, names: List[str] = None):
+        def to_numpy_bulk(frame_ls: List[np.ndarray], path: str, names: List[str] = None):
             FileUtils.Dir.mkdir_here(path)
             if not names:
                 for ix, o in enumerate(frame_ls):
@@ -107,6 +128,11 @@ class FileUtils:
             else:
                 for ix, o in enumerate(frame_ls):
                     o.tofile(os.path.join(path, names[ix]))
+
+        @staticmethod
+        def to_numpy(frame: np.ndarray, path: str, name: str):
+
+            np.save(os.path.join(path, name), frame)
 
         @staticmethod
         def to_json():
@@ -178,10 +204,8 @@ class ArrayUtils:
 
 class PcapUtils:
     @staticmethod  # must change this method
-    def pcap_to_pcdet(source: client.PacketSource,
-                      metadata: client.SensorInfo,
-                      num: int = 0,
-                      path: str = None) -> List[ndarray]:
+    def pcap_to_pcdet(source: client.PacketSource, metadata: client.SensorInfo, num: int = 0, path: str = None,
+                      frame_ls: PopList = None) -> List[ndarray]:
 
         # [doc-stag-pcap-to-csv]
         from itertools import islice
@@ -192,14 +216,10 @@ class PcapUtils:
         scans = iter(client.Scans(source))
         if num:
             scans = islice(scans, num)
-        frame_list: List[np.ndarray] = []
         for idx, scan in enumerate(scans):
             matrix_cloud = Cloud3dUtils.get_matrix_cloud(xyzlut, scan, Ch.channel_arr)
-            frame_list.append(Cloud3dUtils.to_pcdet(matrix_cloud))
-        if path:
-            FileUtils.Output.to_numpy(frame_list, path)
-        else:
-            return frame_list
+            frame_ls.add(Cloud3dUtils.to_pcdet(matrix_cloud))
+        return frame_ls
 
 
 def pcap_to_npy(source: client.PacketSource,
@@ -217,17 +237,6 @@ parserMap = {
 }
 
 outputMap = {
-    'npy': FileUtils.Output.to_numpy,
+    'npy': FileUtils.Output.to_numpy_bulk,
     'json': FileUtils.Output.to_json
 }
-
-
-def main():
-    with open('../resources/pcap/OS1-128_Rev-05_Urban-Drive.json', 'r') as f:
-        metadata = client.SensorInfo(f.read())
-        source = pcap.Pcap('../resources/pcap/OS1-128_Rev-05_Urban-Drive.pcap', metadata)
-        PcapUtils.pcap_to_pcdet(source, metadata, num=1, path=def_numpy)
-
-
-if __name__ == "__main__":
-    main()

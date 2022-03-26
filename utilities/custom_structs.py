@@ -30,14 +30,35 @@ class PopList(List):
         prev = [] if seq is None else seq
         super().__init__(prev)
         self.__full__ = False
-        self.__event_ls__ = set(prev)
-        self.event_dict = {}
+        self.__event_ls__ = set()
 
     def add(self, __object: _T) -> None:
-        self.append(__object)
-        self.notify_all()
+        """
+        Appends an object to the list end and notifies all threads waiting on list update
+        Parameters
+        ----------
+        __object
 
-    def get(self, ix: int, e: Event = None):
+        Returns
+        -------
+
+        """
+        self.append(__object)
+        self._notify_all()
+
+    def get(self, ix: int, e: Event = None) -> _T:
+        """
+        Appends threads Event object to waiting list if reached list end
+
+        Parameters
+        ----------
+        ix
+        e
+
+        Returns
+        -------
+
+        """
         while ix == len(self):
             self.__event_ls__.add(e)
             e.wait()
@@ -69,14 +90,9 @@ class PopList(List):
         """
         self.__full__ = b
         if b:
-            self.notify_all()
+            self._notify_all()
 
-    @synchronized
-    def sub(self):
-        """Subscribe a thread by returning condition variable to list updates"""
-        return self.__event_ls__
-
-    def notify_all(self):
+    def _notify_all(self):
         def notify(event: Event):
             event.set()
-        map(notify, self.__event_ls__)
+        list(map(notify, self.__event_ls__.copy()))

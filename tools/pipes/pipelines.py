@@ -62,8 +62,7 @@ def execute_pipeline(ls_pl: List[Pipeline]):
 
 
 def build_pipeline(args) -> List[Pipeline]:
-    state: State = State()
-    state.args = args
+    state: State = State(args)
     pipeline: List[Pipeline] = []
     for (key, pline, mt) in __generate_list__(args):
         if key is not None:

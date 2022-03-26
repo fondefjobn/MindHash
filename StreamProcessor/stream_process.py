@@ -38,7 +38,6 @@ class QueueProcessor(Pipeline):
         while x < 10:
             out = pcap_ls.get(x, self.event)
             x += 1
-            print('Got', out)
 
 
 class ProcessThread(Thread):
