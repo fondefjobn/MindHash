@@ -62,7 +62,7 @@ class Detector3DTemplate(nn.Module):
             depth_downsample_factor=model_info_dict['depth_downsample_factor']
         )
         model_info_dict['num_point_features'] = vfe_module.get_output_feature_dim()
-        model_info_dict['module_list'].append(vfe_module)
+        model_info_dict['module_list'].add(vfe_module)
         return vfe_module, model_info_dict
 
     def build_backbone_3d(self, model_info_dict):
@@ -76,7 +76,7 @@ class Detector3DTemplate(nn.Module):
             voxel_size=model_info_dict['voxel_size'],
             point_cloud_range=model_info_dict['point_cloud_range']
         )
-        model_info_dict['module_list'].append(backbone_3d_module)
+        model_info_dict['module_list'].add(backbone_3d_module)
         model_info_dict['num_point_features'] = backbone_3d_module.num_point_features
         model_info_dict['backbone_channels'] = backbone_3d_module.backbone_channels \
             if hasattr(backbone_3d_module, 'backbone_channels') else None
@@ -90,7 +90,7 @@ class Detector3DTemplate(nn.Module):
             model_cfg=self.model_cfg.MAP_TO_BEV,
             grid_size=model_info_dict['grid_size']
         )
-        model_info_dict['module_list'].append(map_to_bev_module)
+        model_info_dict['module_list'].add(map_to_bev_module)
         model_info_dict['num_bev_features'] = map_to_bev_module.num_bev_features
         return map_to_bev_module, model_info_dict
 
@@ -102,7 +102,7 @@ class Detector3DTemplate(nn.Module):
             model_cfg=self.model_cfg.BACKBONE_2D,
             input_channels=model_info_dict['num_bev_features']
         )
-        model_info_dict['module_list'].append(backbone_2d_module)
+        model_info_dict['module_list'].add(backbone_2d_module)
         model_info_dict['num_bev_features'] = backbone_2d_module.num_bev_features
         return backbone_2d_module, model_info_dict
 
@@ -117,7 +117,7 @@ class Detector3DTemplate(nn.Module):
             num_bev_features=model_info_dict['num_bev_features'],
             num_rawpoint_features=model_info_dict['num_rawpoint_features']
         )
-        model_info_dict['module_list'].append(pfe_module)
+        model_info_dict['module_list'].add(pfe_module)
         model_info_dict['num_point_features'] = pfe_module.num_point_features
         model_info_dict['num_point_features_before_fusion'] = pfe_module.num_point_features_before_fusion
         return pfe_module, model_info_dict
@@ -135,7 +135,7 @@ class Detector3DTemplate(nn.Module):
             predict_boxes_when_training=self.model_cfg.get('ROI_HEAD', False),
             voxel_size=model_info_dict.get('voxel_size', False)
         )
-        model_info_dict['module_list'].append(dense_head_module)
+        model_info_dict['module_list'].add(dense_head_module)
         return dense_head_module, model_info_dict
 
     def build_point_head(self, model_info_dict):
@@ -154,7 +154,7 @@ class Detector3DTemplate(nn.Module):
             predict_boxes_when_training=self.model_cfg.get('ROI_HEAD', False)
         )
 
-        model_info_dict['module_list'].append(point_head_module)
+        model_info_dict['module_list'].add(point_head_module)
         return point_head_module, model_info_dict
 
     def build_roi_head(self, model_info_dict):
@@ -169,7 +169,7 @@ class Detector3DTemplate(nn.Module):
             num_class=self.num_class if not self.model_cfg.ROI_HEAD.CLASS_AGNOSTIC else 1,
         )
 
-        model_info_dict['module_list'].append(point_head_module)
+        model_info_dict['module_list'].add(point_head_module)
         return point_head_module, model_info_dict
 
     def forward(self, **kwargs):

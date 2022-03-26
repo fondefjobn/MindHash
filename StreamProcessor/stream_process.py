@@ -1,7 +1,8 @@
 from threading import Thread
 from queue import Queue
 
-from tools.pipes.p_tmpl import Pipeline
+from tools.pipes.p_tmpl import Pipeline, GlobalDictionary
+from utilities.custom_structs import PopList
 from utilities.utils import FileUtils as Fs, \
     MatrixCloud as MxCloud, Cloud3dUtils
 from numpy import ndarray
@@ -22,16 +23,22 @@ class ConfigMap:
 ################
 Cm = ConfigMap
 Q = Queue
+Gb = GlobalDictionary
 
 
 ################
 
 class QueueProcessor(Pipeline):
 
-    def execute(self, prev):
-        super().execute(prev)
-        # code goes here
-        super().update(prev)
+    def run(self):
+        super().run()
+        pcap_ls: PopList = self.state[Gb.PcapList]
+        print("Started")
+        x = 0
+        while x < 10:
+            out = pcap_ls.get(x, self.event)
+            x += 1
+            print('Got', out)
 
 
 class ProcessThread(Thread):

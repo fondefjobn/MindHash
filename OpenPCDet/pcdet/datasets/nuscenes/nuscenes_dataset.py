@@ -47,7 +47,7 @@ class NuScenesDataset(DatasetTemplate):
         for info in infos:
             for name in set(info['gt_names']):
                 if name in self.class_names:
-                    cls_infos[name].append(info)
+                    cls_infos[name].add(info)
 
         duplicated_samples = sum([len(v) for _, v in cls_infos.items()])
         cls_dist = {k: len(v) / duplicated_samples for k, v in cls_infos.items()}
@@ -67,7 +67,7 @@ class NuScenesDataset(DatasetTemplate):
         for info in sampled_infos:
             for name in set(info['gt_names']):
                 if name in self.class_names:
-                    cls_infos_new[name].append(info)
+                    cls_infos_new[name].add(info)
 
         cls_dist_new = {k: len(v) / len(sampled_infos) for k, v in cls_infos_new.items()}
 

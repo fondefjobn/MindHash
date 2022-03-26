@@ -10,7 +10,8 @@ from yaml import SafeLoader
 import numpy as np
 from ouster import client, pcap
 
-from tools.pipes.p_tmpl import Pipeline,State
+from tools.pipes.p_tmpl import Pipeline, State, GlobalDictionary as Gb
+from utilities.custom_structs import PopList
 
 np.set_printoptions(threshold=sys.maxsize)
 def_numpy: str = '../resources/output/numpy'
@@ -23,20 +24,25 @@ if classes become bloated we split per module
 """
 
 
-class PcapProcess(Pipeline):
+class PLRoutines:
+    class PcapProcess(Pipeline):
 
-    def execute(self, prev):
-        super().execute(prev)
-        # code goes here
-        super().update(prev)
+        def run(self):
+            super().run()
+            pop_ls = PopList()
+            self.state[Gb.PcapList] = pop_ls
+            x: int = 0
+            while x < 100:
+                pop_ls.add(random.randint(10, 100))
+                x += 1
+                print('+')
 
 
-class ExportLocal(Pipeline):
+    class ExportLocal(Pipeline):
 
-    def execute(self, prev):
-        super().execute(prev)
-        # code goes here
-        super().update(prev)
+        def run(self):
+            super().run()
+            # code goes here
 
 
 class Ch:
@@ -171,13 +177,10 @@ class ArrayUtils:
 
 
 class PcapUtils:
-    @staticmethod
+    @staticmethod  # must change this method
     def pcap_to_pcdet(source: client.PacketSource,
                       metadata: client.SensorInfo,
                       num: int = 0,
-                      npy_dir: str = ".",
-                      npy_base: str = "pcap_out",
-                      npy_ext: str = "npy",
                       path: str = None) -> List[ndarray]:
 
         # [doc-stag-pcap-to-csv]

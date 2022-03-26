@@ -1,6 +1,6 @@
 import threading
-from typing import List, Optional, Union, Tuple, TypeVar
-from threading import Thread, Condition
+from typing import List, Optional, Union, Tuple, TypeVar, Set
+from threading import Event
 
 from numpy import iterable
 from wrapt import synchronized
@@ -26,18 +26,27 @@ class PopList(List):
     Note: Not yet tested
     """
     __full__: bool
-    __cond__: Condition
+    __event_ls__: Set[Event]
     _T = TypeVar("_T")
 
-    def __init__(self, seq: Optional[Tuple, List] = None):
+    def __init__(self, seq: Optional[Union[Tuple, List]] = None):
         prev = [] if seq is None else seq
         super().__init__(prev)
         self.__full__ = False
+        self.__event_ls__ = set(prev)
+        self.event_dict = {}
 
-    def append(self, __object: _T) -> None:
-        with self.__cond__:
-            self.append(__object)
-            self.__cond__.notify_all()
+    def add(self, __object: _T) -> None:
+        self.append(__object)
+        self.notify_all()
+
+    def get(self, ix: int, e: Event = None):
+        while ix == len(self):
+            self.__event_ls__.add(e)
+            e.wait()
+            e.clear()
+            self.__event_ls__.remove(e)
+        return self[ix]
 
     @synchronized
     def full(self):
@@ -63,9 +72,14 @@ class PopList(List):
         """
         self.__full__ = b
         if b:
-            self.__cond__.notify_all()
+            self.notify_all()
 
     @synchronized
     def sub(self):
         """Subscribe a thread by returning condition variable to list updates"""
-        return self.__cond__
+        return self.__event_ls__
+
+    def notify_all(self):
+        def notify(event: Event):
+            event.set()
+        map(notify, self.__event_ls__)

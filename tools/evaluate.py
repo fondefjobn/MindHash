@@ -27,11 +27,9 @@ from pcdet.utils import common_utils
 
 class Evaluate(Pipeline):
 
-    def execute(self, prev: State):
-        super().execute(prev)
+    def run(self):
+        super().run()
 
-        # code goes here
-        super().update(prev)
 
 
 class DemoDataset(DatasetTemplate):

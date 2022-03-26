@@ -101,8 +101,8 @@ class OpenPCDetWaymoDetectionMetricsEstimator(tf.test.TestCase):
         """
 
         for x in range(0, 100):
-            config.score_cutoffs.append(x * 0.01)
-        config.score_cutoffs.append(1.0)
+            config.score_cutoffs.add(x * 0.01)
+        config.score_cutoffs.add(1.0)
 
         text_format.Merge(config_text, config)
         return config
