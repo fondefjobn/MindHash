@@ -1,9 +1,9 @@
-from tools.pipes.p_tmpl import Pipeline, State
+from tools.pipes.p_template import State, RoutineSet
 
 
-class Statistics(Pipeline):
+class Routines(RoutineSet):
+    def id(self):
+        return 'STAT_BUNDLE'
 
-    def run(self):
-        super().run()
-        # code goes here
-
+    def Statistics(self, state, *args):
+        pass

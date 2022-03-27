@@ -1,13 +1,13 @@
-from tools.pipes.p_tmpl import Pipeline, State
+from tools.pipes.p_template import State, RoutineSet
 
 
-class Visualization(Pipeline):
+class Routines(RoutineSet):
 
-    def run(self):
-        super().run()
-        # code goes here
+    def id(self):
+        return 'VIZ_BUNDLE'
 
-
+    def Visualization(self, state, *args):
+        pass
 
 class Visualizer:
 

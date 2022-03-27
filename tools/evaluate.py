@@ -5,7 +5,7 @@ from pathlib import Path
 from time import sleep
 from open3d.cpu.pybind.visualization import Visualizer
 from pcdet.config import cfg, cfg_from_yaml_file
-from tools.pipes.p_tmpl import Pipeline, State
+from tools.pipes.p_template import State, SAd, RoutineSet
 from tools.visual_utils.open3d_vis_utils import draw_box
 
 try:
@@ -25,11 +25,16 @@ from pcdet.models import build_network, load_data_to_gpu
 from pcdet.utils import common_utils
 
 
-class Evaluate(Pipeline):
+class Routines(RoutineSet):
 
-    def run(self):
-        super().run()
+    def id(self):
+        return 'EVAL_BUNDLE'
 
+    def Evaluate(self, state: State, *args):
+        npy_ls = args[1]
+        x = 0
+        while x < len(npy_ls) or not npy_ls.full():
+            pass
 
 
 class DemoDataset(DatasetTemplate):

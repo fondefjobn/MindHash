@@ -1,7 +1,11 @@
-from threading import Thread
+import logging
+from threading import Thread, Event
 from queue import Queue
+from typing import List, TypeVar, Dict
 
-from tools.pipes.p_tmpl import Pipeline, GlobalDictionary
+import numpy
+
+from tools.pipes.p_template import SAd, RoutineSet, State
 from utilities.custom_structs import PopList
 from utilities.utils import FileUtils as Fs, \
     MatrixCloud as MxCloud, Cloud3dUtils
@@ -23,64 +27,42 @@ class ConfigMap:
 ################
 Cm = ConfigMap
 Q = Queue
-Gb = GlobalDictionary
 
 
 ################
 
-class QueueProcessor(Pipeline):
+class Routines(RoutineSet):
 
-    def run(self):
-        super().run()
-        pcap_ls: PopList = self.state[Gb.PcapList]
-        print("Started")
+    def id(self):
+        return 'PROCESS_BUNDLE'
+
+    def ListProcessor(self, state: State, *args):
+        pcap_ls: PopList = args[0]
+        npy_ls: PopList = args[1]
+        sp: StreamProcessor = StreamProcessor(pcap_ls, npy_ls)
         x = 0
-        while x < 10:
-            out = pcap_ls.get(x, self.event)
+        e = Event()
+        while x < len(pcap_ls) or not pcap_ls.full():
+            out = pcap_ls.get(x, e)
+            sp.read_stream(out)
             x += 1
-
-
-class ProcessThread(Thread):
-    in_queue: "Q[MxCloud]"
-    out_queue: "Q[ndarray]"
-
-    def __init__(self, q: "Q[MxCloud]", conf: dict):
-        super().__init__()
-        self.config = conf
-        self.in_queue = q
-        self.out_queue = Q(maxsize=self.config[Cm.q_size])
-
-    def _setup(self):
-        pass
-
-    def run(self) -> None:
-        c = self.config
-        timeout = 10 if [Cm.live] else -1  # wrong
-
-    def _read(self):
-        while True:
-            o = Cloud3dUtils.to_pcdet(self.in_queue.get(block=True, timeout=10))
-            self.out_queue.put(o, block=True)
+        npy_ls.set_full()
+        Routines.logging.info(msg='ListProcessor: done')
 
 
 class StreamProcessor:
     config: dict = None
     idle: bool = False
-    process: ProcessThread = None
-    in_queue: "Q[MxCloud]"
-    out_queue: "Q[ndarray]"
+    in_ls: PopList
+    out_ls: PopList
 
-    def __init__(self, queue: "Q[MxCloud]", cfg_path):
-        self.in_queue = queue
-        self._load_config(cfg_path)
+    def __init__(self, in_ls: PopList, out_ls: PopList, cfg_path=None):
+        self.in_ls = in_ls
+        self.out_ls = out_ls
+        # self._load_config(cfg_path)
 
     def _load_config(self, cfg_path):
         self.config = Fs.parse_yaml(cfg_path)
 
-    def read_stream(self):
-        self.process = ProcessThread(self.in_queue, self.config)
-        self.out_queue = self.process.out_queue
-        self.process.start()
-
-    def stop_stream(self):
-        self.process.join()
+    def read_stream(self, mx):
+        self.out_ls.add(Cloud3dUtils.to_pcdet(mx))

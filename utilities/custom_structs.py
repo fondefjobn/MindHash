@@ -22,15 +22,18 @@ class PopList(List):
 
     Note: Not yet tested
     """
-    __full__: bool
-    __event_ls__: Set[Event]
+    _full_: bool
+    _event_ls_: Set[Event]
+    _func_: str = None
+    _ID_ = None
     _T = TypeVar("_T")
 
-    def __init__(self, seq: Optional[Union[Tuple, List]] = None):
+    def __init__(self, seq: Optional[Union[Tuple, List]] = None, doc: str = ''):
         prev = [] if seq is None else seq
         super().__init__(prev)
-        self.__full__ = False
-        self.__event_ls__ = set()
+        self._full_ = False
+        self._event_ls_ = set()
+        self.__doc__ += doc
 
     def add(self, __object: _T) -> None:
         """
@@ -60,10 +63,10 @@ class PopList(List):
 
         """
         while ix == len(self):
-            self.__event_ls__.add(e)
+            self._event_ls_.add(e)
             e.wait()
             e.clear()
-            self.__event_ls__.remove(e)
+            self._event_ls_.remove(e)
         return self[ix]
 
     @synchronized
@@ -74,10 +77,10 @@ class PopList(List):
         -------
     `   True if list updating session finished
         """
-        return self.__full__
+        return self._full_
 
     @synchronized
-    def set_full(self, b: bool):
+    def set_full(self, b: bool = True):
         """
         Set full property
         Parameters
@@ -88,11 +91,15 @@ class PopList(List):
         -------
 
         """
-        self.__full__ = b
+        self._full_ = b
         if b:
             self._notify_all()
+
+    def get_routine(self) -> str:
+        return self._func_
 
     def _notify_all(self):
         def notify(event: Event):
             event.set()
-        list(map(notify, self.__event_ls__.copy()))
+
+        list(map(notify, self._event_ls_.copy()))

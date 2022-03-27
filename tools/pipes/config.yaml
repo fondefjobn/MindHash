@@ -1,0 +1,46 @@
+PIPELINES:
+  DISABLE_RT_LIST: [ 'placeholder' ]
+  POPLIST:
+    - ID: USER_INPUT
+      # List of routines producing to this list (ID = method name)
+      # see PopList doc
+      PRODUCER:
+        - ID: UserInput
+          BUNDLE: UTILS_BUNDLE
+          MT: True # Multithreading producer
+      CONSUMER: # List of routines consuming from list
+        - ID: ListProcessor
+          BUNDLE: PROCESS_BUNDLE
+          MT: True # Multithreading consumer
+      IO: pcap_to_mxc
+    - ID: PROCESSED_INPUT
+      PRODUCER:
+        - ID: ListProcessor
+          BUNDLE: PROCESS_BUNDLE
+          MT: True
+      CONSUMER:
+        - ID: Evaluate
+          BUNDLE: EVAL_BUNDLE
+          MT: True
+        - ID: ExportLocal
+          BUNDLE: UTILS_BUNDLE
+          MT: True
+      IO: mxc_to_npy
+    - ID: PREDICTIONS
+      PRODUCER:
+        - ID: Evaluate
+          BUNDLE: EVAL_BUNDLE
+          MT: True
+      CONSUMER:
+        - ID: Visualization
+          BUNDLE: VIZ_BUNDLE
+          MT: True
+        - ID: Statistics
+          BUNDLE: STAT_BUNDLE
+          MT: True
+      IO: pcdet_eval
+
+###       - ID: ExportLocal
+#          BUNDLE: UTILS_BUNDLE
+#          MT: True
+#(not supporting multiple context sibling threads yet , e.g. multiple ExportLocal routines of different values)

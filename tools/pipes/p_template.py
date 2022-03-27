@@ -3,7 +3,7 @@ from argparse import Namespace
 import logging
 from threading import Thread, Event
 from abc import ABC, abstractmethod
-from typing import Set
+from typing import Set, List, Iterable
 
 from utilities.custom_structs import PopList
 
@@ -48,6 +48,7 @@ GN = SAd
 class State:
     """
     Wrapper class for state and args used in script execution
+
     """
     state: dict
     args: Namespace
@@ -65,59 +66,18 @@ class State:
         self.state[key] = value
 
     def __getitem__(self, key):
-        print(str(key))
         return self.state[key]
 
 
-class RoutineSet:
+class RoutineSet(object):
+    """
+    Wrapper class for bundles of routines
+    ID must be set by any class subclassing RoutineSet and added to pipeline config file accordingly
+    """
     import logging
     logging.basicConfig(format='%(levelname)s:%(message)s', level=logging.INFO)
     log = logging
 
-class Pipeline(ABC, Thread):
-    """
-    state
-    produce: data resources
-    consume: data resources
-    in_opt: in options from args
-    out_opt: out options from args
-
-    """
-    state: State
-    produce: Set[property]
-    consume: Set[property]
-    in_options: Set[str]
-    out_options: Set[str]
-
-    def __init__(self, prev: State = None, threaded: bool = True):
-        super().__init__()
-        self.state = prev if prev is not None else State()
-        self.threaded = threaded
-        self.event = Event()
-        self.produce = set()
-        self.consume = set()
-
     @abstractmethod
-    def run(self, *args):
-        """
-        Abstract function to check current state and update step location
-
-        Parameters
-        ----------
-        Returns
-        -------
-
-        """
-        if not self.state[id(GN.Success)]:
-            logging.Logger.error(f'Broken pipe at step f{self.state["step"]}')
-            exit(1)
-        self.state[id(GN.Step)] = self.__class__.__name__
-
-    def flow(self):
-        """
-        Wrapper function for launching routine either on a new thread or
-        in current thread (blocking function)"""
-        if self.threaded:
-            self.start()
-        else:
-            self.run()
+    def id(self):
+        return None

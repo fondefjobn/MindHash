@@ -1,69 +1,77 @@
 import logging
 import os
-import random
-import sys
-import logging
-from numpy import ndarray
-from ouster import client as cl
-import yaml
-from typing import List
-from yaml import SafeLoader
+from threading import Event
+from typing import List, TypeVar, Dict
+from easydict import EasyDict as edict
 import numpy as np
+import yaml
 from ouster import client, pcap
+from ouster import client as cl
+from yaml import SafeLoader
 
-from tools.pipes.p_tmpl import Pipeline, State, GlobalDictionary as Gb
+from tools.pipes.p_template import SAd, RoutineSet, State
 from utilities.custom_structs import PopList
 
 def_numpy: str = '../resources/output/numpy'
 def_json: str = '../resources/output/json'
 def_pcap: str = '../resources/output/pcap_out'
+_T = TypeVar("_T")
+_K = TypeVar("_K")
 
 """
 Utilities Module
 if classes become bloated we split per module
 """
+logging.basicConfig(format='%(levelname)s:%(message)s', level=logging.CRITICAL)
 
 
-class PLRoutines:
+class Routines(RoutineSet):
 
-    logging.basicConfig(format='%(levelname)s:%(message)s', level=logging.INFO)
+    def id(self):
+        return 'UTILS_BUNDLE'
 
-    class PcapProcess(Pipeline):
+    def UserInput(self, state: State, *args):
         """
-        Routine: PCAP File process
+        Routine: User Input File process
 
-        Produces: PcapList
-
-        Consumes: None
-
+        Produces: UserInput
+        Consumes: User provided input
         Requires: Pcap path
+        Parameters
+        ----------
+        state
+        args (input_list, output_list)
+
+        Returns
+        -------
+
         """
-        produce = {Gb.PcapList}
+        with open(state.args.meta, 'r') as f:
+            out_ls: PopList = args[1]
+            getattr(IO, state.args.sensor)(state, f, out_ls)
+            out_ls.set_full()
+        Routines.logging.info(msg='UserInput reading: done')
 
-        def run(self):
-            super().run()
-            pop_ls = PopList()
-            self.state[Gb.PcapList] = pop_ls
-            with open(self.state.args.meta, 'r') as f:
-                metadata = client.SensorInfo(f.read())
-                source = pcap.Pcap(self.state.args.pcap, metadata)
-                PcapUtils.pcap_to_pcdet(source, metadata, num=100, frame_ls=pop_ls)
-                pop_ls.set_full(True)
-            logging.info(msg='PcapProcess: done')
+    def ExportLocal(self, state: State, *args):
+        """
+         Routine: Export conversion results
 
-    class ExportLocal(Pipeline):
-        consume = {Gb.PcapList}
+         Produces: None
 
-        def run(self):
-            super().run()
-            pop_ls: PopList = self.state[Gb.PcapList]
-            x = 0
-            FileUtils.Dir.mkdir_here(def_numpy)
-            while x < len(pop_ls) or not pop_ls.full():
-                out = pop_ls.get(x, self.event)
-                FileUtils.Output.to_numpy(out, def_numpy, str(x))
-                x += 1
-            logging.info(msg='Export: done')
+         Consumes: PcapList
+
+         Requires: None
+         """
+        Routines.logging.info(msg='Export:STARTED')
+        x = 0
+        e = Event()
+        in_ls = args[0]
+        FileUtils.Dir.mkdir_here(def_numpy)
+        while x < len(in_ls) or not in_ls.full():
+            out = in_ls.get(x, e)
+            FileUtils.Output.to_numpy(out, def_numpy, str(x))
+            x += 1
+        Routines.logging.info(msg='Export: done')
 
 
 class Ch:
@@ -73,6 +81,34 @@ class Ch:
     SIGNAL = 'SIGNAL'
     XYZ = 'XYZ'
     channel_arr = [RANGE, SIGNAL, NEAR_IR, REFLECTIVITY]  # exact order of fields
+
+
+def write(hm: Dict[_K, _T], k: _K, v: _T):
+    """
+    Write to dictionary
+    Parameters
+    ----------
+    hm
+    k
+    v
+
+    Returns
+    -------
+
+    """
+    hm.update({k, v})
+
+
+def edict_to_dict(edict_obj):
+    dict_obj = {}
+
+    for key, vals in edict_obj.items():
+        if isinstance(vals, edict):
+            dict_obj[key] = edict_to_dict(vals)
+        else:
+            dict_obj[key] = vals
+
+    return dict_obj
 
 
 class FileUtils:
@@ -110,11 +146,12 @@ class FileUtils:
                 else:
                     return parse_f(f, *args, **kwargs)
         except (OSError, yaml.YAMLError):
+            logging.critical(msg='Error loading file')
             return None
 
     @staticmethod
-    def parse_yaml(path: str, output=None):
-        return FileUtils.safe_parsing(path, yaml.load, out=output, Loader=SafeLoader)
+    def parse_yaml(path: str, out=None):
+        return FileUtils.safe_parsing(path, yaml.load, out=out, Loader=SafeLoader)
 
     class Output:
         """Convert objects and save in specified file format"""
@@ -202,30 +239,29 @@ class ArrayUtils:
         return (data - np.min(data)) / (np.max(data) - np.min(data))
 
 
-class PcapUtils:
-    @staticmethod  # must change this method
-    def pcap_to_pcdet(source: client.PacketSource, metadata: client.SensorInfo, num: int = 0, path: str = None,
-                      frame_ls: PopList = None) -> List[ndarray]:
+class IO:
+    @staticmethod
+    def ouster(state: State, file, out_ls: PopList):
+        metadata = client.SensorInfo(file.read())
+        source = pcap.Pcap(state.args.input, metadata)
+        Convertor.ouster_pcap_to_mxc(source, metadata, frame_ls=out_ls, N=state.args.N)
 
+
+class Convertor:
+    @staticmethod
+    def ouster_pcap_to_mxc(source: client.PacketSource, metadata: client.SensorInfo, frame_ls: PopList, N: int = 1,
+                           ) -> List[MatrixCloud]:
         # [doc-stag-pcap-to-csv]
         from itertools import islice
         # precompute xyzlut to save computation in a loop
         xyzlut = client.XYZLut(metadata)
-
         # create an iterator of LidarScans from pcap and bound it if num is specified
         scans = iter(client.Scans(source))
-        if num:
-            scans = islice(scans, num)
+        if N:
+            scans = islice(scans, N)
         for idx, scan in enumerate(scans):
-            matrix_cloud = Cloud3dUtils.get_matrix_cloud(xyzlut, scan, Ch.channel_arr)
-            frame_ls.add(Cloud3dUtils.to_pcdet(matrix_cloud))
+            frame_ls.add(Cloud3dUtils.get_matrix_cloud(xyzlut, scan, Ch.channel_arr))
         return frame_ls
-
-
-def pcap_to_npy(source: client.PacketSource,
-                metadata: client.SensorInfo,
-                num: int = 0):
-    return PcapUtils.pcap_to_pcdet(source, metadata, num)
 
 
 parserMap = {
@@ -233,7 +269,6 @@ parserMap = {
     'csv': None,
     'las': None,
     'json': None,
-
 }
 
 outputMap = {

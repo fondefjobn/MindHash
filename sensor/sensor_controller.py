@@ -1,16 +1,15 @@
 import logging
 
-from tools.pipes.p_tmpl import Pipeline, State
+from tools.pipes.p_template import State, RoutineSet
 
 
-class LiveStream(Pipeline):
+class Routines(RoutineSet):
 
-    def run(self):
-        super().run()
+    def LiveStream(self, state: State, *args):
         try:
             pass
         except Exception:
-            logging.Logger.critical('Failure to execute pipeline')
+            logging.Logger.critical(msg='Failure to execute pipeline')
             exit(1)
 
 
