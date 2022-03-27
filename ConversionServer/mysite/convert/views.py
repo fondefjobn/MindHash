@@ -1,13 +1,20 @@
-from IPython.utils import io
-from django.http import HttpResponse
-import numpy as np
-import json
+from django.http import HttpRequest, HttpResponse
 
+from django.shortcuts import render
+from .forms import sendableFile
+import numpy
 
 def convert(request):
-    data = np.load(io.BytesIO(request.content))
-    """
-    Conversion goes here
-    """
-    dataJson = {}
-    return HttpResponse(dataJson, content_type='application/json')
+    if request.method == "GET":
+        form = sendableFile()
+        return render(request, "convert.html", {"form": form})
+
+    elif request.method == "POST":
+        form = sendableFile(request.POST, request.FILES)
+        if form.is_valid():
+            file = form.cleaned_data["file"]
+            np = numpy.load(file)
+            return HttpResponse(file.name + ": recieved succesfully\n" + numpy.array2string(np))
+
+        return HttpResponse("failed")
+
