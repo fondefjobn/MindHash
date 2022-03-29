@@ -1,6 +1,5 @@
 import argparse
-from sensor.sensor_controller import SensorController as SControl
-from tools.pipes.pipelines import build_pipeline, execute_pipeline
+from tools.pipes import build_pipeline, execute_pipeline
 
 """Project CLI
 We will use for debugging and initial usage a simple argparser,
@@ -31,7 +30,7 @@ def parse_config():
     parser.add_argument('-v', "--verbose", help='Verbose output', action="store_true")
     parser.add_argument('--visual', help='Visualize results with Open3D', action="store_true")
     parser.add_argument('--export', help='Save results locally', action="store_true")
-    parser.add_argument('--stats', help='Generate statistics', action="store_true")
+    parser.add_argument('--stats', help='Generate statistic', action="store_true")
     args = parser.parse_args()
     return args
 

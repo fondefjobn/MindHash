@@ -2,6 +2,7 @@ numpy
 llvmlite
 numba
 wrapt
+django
 tensorboardX
 easydict
 open3d==0.13.0

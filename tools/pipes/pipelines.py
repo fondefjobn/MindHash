@@ -6,8 +6,8 @@ from easydict import EasyDict
 
 from StreamProcessor.stream_process import Routines as R_Prc
 from sensor.sensor_controller import Routines as R_Live
-from statistics.stats import Routines as R_Stat
-from tools.evaluate import Routines as R_Eval
+from statistic.stats import Routines as R_Stat
+from OpenPCDet.tools.evaluate import Routines as R_Eval
 from tools.pipes.p_template import State
 from utilities.custom_structs import PopList
 from utilities.utils import Routines as R_Util, FileUtils as fu
@@ -110,7 +110,6 @@ def build_pipeline(args) -> List:
 
     """
     state: State = State(args)
-    pipeline: List[Thread] = []
 
     edict = EasyDict(fu.parse_yaml(CONFIG))
 
@@ -125,8 +124,7 @@ def build_pipeline(args) -> List:
 
     print('-----------------',thrds.items())
     pipeline = [threading.Thread(target=r["exec"], args=(state, r["CONSUMER"], r["PRODUCER"])) for r in thrds.values()
-                if r["mt"] is True]
-    print(pipeline)
+                ]
     if not pipeline:
         exit(0)
     return pipeline

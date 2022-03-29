@@ -1,6 +1,6 @@
 import logging
 
-from tools.pipes.p_template import State, RoutineSet
+from tools.pipes import State, RoutineSet
 
 
 class Routines(RoutineSet):
