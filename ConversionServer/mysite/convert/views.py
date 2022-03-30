@@ -17,4 +17,4 @@ def convert(request):
             return HttpResponse(file.name + ": recieved succesfully\n" + numpy.array2string(np))
 
         return HttpResponse("failed")
-        
+
