@@ -35,8 +35,6 @@ class Routines(RoutineSet):
     def Evaluate(self, state: State, *args):
         npy_ls = args[1]
         x = 0
-        sys.path.append(state.args.mlpath)
-        sys.path.append(self.def_npy)
         logger = common_utils.create_logger()
         config = str((base_path / ds_cfgs[state.args.ml]).resolve())
         config = cfg_from_yaml_file(config, cfg, rel_path=file_path)
@@ -186,13 +184,13 @@ def main():
             data_dict = demo_dataset.collate_batch([data_dict])
             load_data_to_gpu(data_dict)
             pred_dicts, _ = model.forward(data_dict)
-            with open('../../resources/output/json/out.json', 'w') as f:
-                o = {
-                    'ref_boxes': pred_dicts[0]['pred_boxes'].cpu().tolist(),
-                    'ref_scores': pred_dicts[0]['pred_scores'].cpu().tolist(),
-                    'ref_labels': pred_dicts[0]['pred_labels'].cpu().tolist()
-                }
-                json.dump(o, f)
+            #with open('../../resources/output/json/out.json', 'w') as f:
+             #   o = {
+              #      'ref_boxes': pred_dicts[0]['pred_boxes'].cpu().tolist(),
+             #       'ref_scores': pred_dicts[0]['pred_scores'].cpu().tolist(),
+             #       'ref_labels': pred_dicts[0]['pred_labels'].cpu().tolist()
+             #   }
+             #   json.dump(o, f)
             draw_scenes(vis, pts, points=data_dict['points'][:, 1:], ref_boxes=pred_dicts[0]['pred_boxes'],
                         ref_scores=pred_dicts[0]['pred_scores'],
                         ref_labels=pred_dicts[0]['pred_labels'])

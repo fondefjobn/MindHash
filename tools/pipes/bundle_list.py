@@ -1,11 +1,11 @@
 from argparse import Namespace
 from typing import Dict, Any
 
-from StreamProcessor.stream_process import Routines as R_Prc
+from streamprocessor.stream_process import Routines as R_Prc
 from sensor.sensor_controller import Routines as Input
 from statistic.stats import Routines as R_Stat
 from OpenPCDet.tools.evaluate import Routines as R_Eval
-from visualizer.viz_module import Routines as R_Viz
+from visualizer.vizualizer import Routines as R_Viz
 from tools.routines.export import Routines as R_Util
 
 

@@ -5,7 +5,7 @@ PIPELINES:
       # List of routines producing to this list (ID = method name)
       # see PopList doc
       PRODUCER:
-        - ID: UserInput
+        - ID: UserInput  # change this to support different producer routines based on args
           BUNDLE: SENSOR_BUNDLE
           MT: True # Multithreading producer
       CONSUMER: # List of routines consuming from list

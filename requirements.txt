@@ -1,6 +1,7 @@
 numpy
 llvmlite
 numba
+requests
 wrapt
 django
 tensorboardX

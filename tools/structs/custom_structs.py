@@ -1,3 +1,4 @@
+import dataclasses
 import threading
 from typing import List, Optional, Union, Tuple, TypeVar, Set
 from threading import Event
@@ -104,6 +105,19 @@ class PopList(List):
 
         list(map(notify, self._event_ls_.copy()))
 
+class MatrixCloud:
+    """Our project standardization data-structure for point clouds.
+    All sensor outputs are converted to fit into this class"""
+
+    def __init__(self):
+        self.timestamps = None
+        self.clouds = {'xyz': None}
+        self.channels = {
+            Ch.NEAR_IR: None,
+            Ch.SIGNAL: None,
+            Ch.REFLECTIVITY: None
+        }
+
 
 class Ch:
     RANGE = 'RANGE'
@@ -112,10 +126,3 @@ class Ch:
     SIGNAL = 'SIGNAL'
     XYZ = 'XYZ'
     channel_arr = [RANGE, SIGNAL, NEAR_IR, REFLECTIVITY]  # exact order of fields
-
-
-class MatrixCloud:
-    def __init__(self):
-        self.timestamps = None
-        self.clouds = {'xyz': None}
-        self.channels = {}

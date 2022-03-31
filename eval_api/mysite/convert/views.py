@@ -15,7 +15,7 @@ from OpenPCDet.tools.evaluate import build_net, DemoDataset, evaluate
 from utilities.mh_parser import SAParser
 from .forms import sendableFile
 import numpy
-from ConversionServer.mysite.manage import cfg_file, relative_path
+from eval_api.mysite.manage import cfg_file, relative_path
 
 ckpt = relative_path + 'pv_rcnn.pth'
 data = relative_path + 'format.npy'
