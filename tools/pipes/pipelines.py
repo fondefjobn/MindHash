@@ -1,17 +1,11 @@
 import threading
 from threading import Thread
-from typing import List, Any, Dict
+from typing import List
 
 from easydict import EasyDict
 
-from StreamProcessor.stream_process import Routines as R_Prc
-from sensor.sensor_controller import Routines as R_Live
-from statistic.stats import Routines as R_Stat
-from OpenPCDet.tools.evaluate import Routines as R_Eval
-from tools.pipes.p_template import State
-from utilities.custom_structs import PopList
-from utilities.utils import Routines as R_Util, FileUtils as fu
-from visualizer.viz_module import Routines as R_Viz
+from tools.structs import PopList
+from utilities.utils import FileUtils as fu
 
 """
 Tool module for building pipeline execution of functions
@@ -27,20 +21,15 @@ Solution: Sequential execution of separate routines sharing one state
     Arg/Any | Routine | isThreaded
 """
 
+# Dictionary of string values
 CONFIG: str = '../tools/pipes/config.yaml'
+PRODUCER: str = 'PRODUCER'
+CONSUMER: str = 'CONSUMER'
+_exec: str = 'exec'
+_mt: str = 'mt'
 
 
-def __generate_list__(args) -> Dict[Any, Any]:
-    a = args
-    __all__ = {(a.live, R_Live),
-               (a.post, R_Util),
-               (True, R_Prc),
-               (a.eval, R_Eval),
-               (a.visual, R_Viz),
-               (a.stats, R_Stat),
-               (a.export, R_Util)}
 
-    return dict([(y.id(), y) for y in [y() for (x, y) in __all__ if x is not None]])
 
 
 def execute_pipeline(ls_pl: List[Thread]):
@@ -61,7 +50,6 @@ def execute_pipeline(ls_pl: List[Thread]):
     """
     for ix, pl in enumerate(ls_pl):
         pl.start()
-        # print(pl.state[id(Gd.Success)], pl.state[id(Gd.Step)])
 
 
 def update_routines(bundles: dict, schema: dict, ls_cfg, role: str, pop_ls: list):
@@ -73,9 +61,7 @@ def update_routines(bundles: dict, schema: dict, ls_cfg, role: str, pop_ls: list
     role
     schema
     bundles
-    r_id
     ls_cfg
-    producer
 
     Returns
     -------
@@ -88,43 +74,40 @@ def update_routines(bundles: dict, schema: dict, ls_cfg, role: str, pop_ls: list
                 return False
             else:
                 schema[obj_cfg.ID] = {
-                    'exec': getattr(bundles[obj_cfg.BUNDLE], obj_cfg.ID),
-                    'PRODUCER': None,
-                    'CONSUMER': None,
-                    'mt': obj_cfg.MT
+                    _exec: getattr(bundles[obj_cfg.BUNDLE], obj_cfg.ID),
+                    PRODUCER: None,
+                    CONSUMER: None,
+                    _mt: obj_cfg.MT
                 }
         schema[obj_cfg.ID][role] = pop_ls
         return True
+
     list(map(update, ls_cfg))
 
 
-def build_pipeline(args) -> List:
+def build_pipeline( state, bundles) -> List:
     """
 
     Parameters
     ----------
+    state
     args
 
     Returns
     -------
 
     """
-    state: State = State(args)
 
     edict = EasyDict(fu.parse_yaml(CONFIG))
-
-    print(edict)
-    bundles = __generate_list__(args)
-    thrds: dict = {}
+    threads: dict = {}
     print(bundles)
     for pls_cfg in edict.PIPELINES.POPLIST:
         pls: PopList = PopList(doc=pls_cfg.ID)
-        update_routines(bundles, thrds, ls_cfg=pls_cfg.PRODUCER, role='PRODUCER', pop_ls=pls)
-        update_routines(bundles, thrds, ls_cfg=pls_cfg.CONSUMER, role='CONSUMER', pop_ls=pls)
+        update_routines(bundles, threads, ls_cfg=pls_cfg.PRODUCER, role=PRODUCER, pop_ls=pls)
+        update_routines(bundles, threads, ls_cfg=pls_cfg.CONSUMER, role=CONSUMER, pop_ls=pls)
 
-    print('-----------------',thrds.items())
-    pipeline = [threading.Thread(target=r["exec"], args=(state, r["CONSUMER"], r["PRODUCER"])) for r in thrds.values()
-                ]
+    pipeline = [threading.Thread(target=r[_exec], args=(state, r[CONSUMER], r[PRODUCER]))
+                for r in threads.values()]
     if not pipeline:
         exit(0)
     return pipeline

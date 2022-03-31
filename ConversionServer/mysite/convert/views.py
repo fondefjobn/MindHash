@@ -2,6 +2,7 @@ import glob
 from pathlib import Path
 
 import numpy as np
+import torch
 from django.http import HttpResponse
 
 from django.shortcuts import render
@@ -17,7 +18,7 @@ import numpy
 from ConversionServer.mysite.manage import cfg_file, relative_path
 
 ckpt = relative_path + 'pv_rcnn.pth'
-data = relative_path+'460.npy'
+data = relative_path + 'format.npy'
 ext = '.npy'
 logger = common_utils.create_logger()
 config = cfg_from_yaml_file(cfg_file, cfg, rel_path=relative_path)
@@ -81,7 +82,8 @@ def convert(request):
             file = form.cleaned_data["file"]
             scene = numpy.load(file)
             ds = to_dataset(scene)
-            out = SAParser(evaluate(model, ds, logger)).to_json()
+            with torch.no_grad():
+                out = SAParser(evaluate(model, ds, logger)).to_json()
 
             return HttpResponse(out)
 

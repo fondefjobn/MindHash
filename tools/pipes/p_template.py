@@ -1,11 +1,7 @@
-import this
 from argparse import Namespace
-import logging
-from threading import Thread, Event
 from abc import ABC, abstractmethod
-from typing import Set, List, Iterable
 
-from utilities.custom_structs import PopList
+from tools.structs import PopList
 
 
 class BundleDictionary(ABC):

@@ -2,7 +2,7 @@ from threading import Event
 from queue import Queue
 
 from tools.pipes import RoutineSet, State
-from utilities.custom_structs import PopList
+from tools.structs.custom_structs import PopList
 from utilities.utils import FileUtils as Fs, \
     Cloud3dUtils
 
@@ -31,17 +31,17 @@ class Routines(RoutineSet):
     def id(self):
         return 'PROCESS_BUNDLE'
 
-    def ListProcessor(self, state: State, *args):
-        pcap_ls: PopList = args[0]
-        npy_ls: PopList = args[1]
-        sp: StreamProcessor = StreamProcessor(pcap_ls, npy_ls)
+    def ListProcessor(self, state: State, *args): #abstract to methods
+        in_ls: PopList = args[0]
+        out_ls: PopList = args[1]
+        sp: StreamProcessor = StreamProcessor(in_ls, out_ls)
         x = 0
         e = Event()
-        while x < len(pcap_ls) or not pcap_ls.full():
-            out = pcap_ls.get(x, e)
+        while x < len(in_ls) or not in_ls.full():
+            out = in_ls.get(x, e)
             sp.read_stream(out)
             x += 1
-        npy_ls.set_full()
+        out_ls.set_full()
         Routines.logging.info(msg='ListProcessor: done')
 
 

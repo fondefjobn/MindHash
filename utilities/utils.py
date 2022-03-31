@@ -1,5 +1,6 @@
 import logging
 import os
+from argparse import Namespace
 from threading import Event
 from typing import List, TypeVar, Dict
 from easydict import EasyDict as edict
@@ -9,8 +10,7 @@ from ouster import client, pcap
 from ouster import client as cl
 from yaml import SafeLoader
 
-from tools.pipes import RoutineSet, State
-from utilities.custom_structs import PopList
+from tools.structs.custom_structs import PopList, Ch, MatrixCloud
 
 def_numpy: str = '../resources/output/numpy'
 def_json: str = '../resources/output/json'
@@ -25,62 +25,7 @@ if classes become bloated we split per module
 logging.basicConfig(format='%(levelname)s:%(message)s', level=logging.CRITICAL)
 
 
-class Routines(RoutineSet):
 
-    def id(self):
-        return 'UTILS_BUNDLE'
-
-    def UserInput(self, state: State, *args):
-        """
-        Routine: User Input File process
-
-        Produces: UserInput
-        Consumes: User provided input
-        Requires: Pcap path
-        Parameters
-        ----------
-        state
-        args (input_list, output_list)
-
-        Returns
-        -------
-
-        """
-        with open(state.args.meta, 'r') as f:
-            out_ls: PopList = args[1]
-            getattr(IO, state.args.sensor)(state, f, out_ls)
-            out_ls.set_full()
-        Routines.logging.info(msg='UserInput reading: done')
-
-    def ExportLocal(self, state: State, *args):
-        """
-         Routine: Export conversion results
-
-         Produces: None
-
-         Consumes: PcapList
-
-         Requires: None
-         """
-        Routines.logging.info(msg='Export:STARTED')
-        x = 0
-        e = Event()
-        in_ls = args[0]
-        FileUtils.Dir.mkdir_here(def_numpy)
-        while x < len(in_ls) or not in_ls.full():
-            out = in_ls.get(x, e)
-            FileUtils.Output.to_numpy(out, def_numpy, str(x))
-            x += 1
-        Routines.logging.info(msg='Export: done')
-
-
-class Ch:
-    RANGE = 'RANGE'
-    NEAR_IR = 'NEAR_IR'
-    REFLECTIVITY = 'REFLECTIVITY'
-    SIGNAL = 'SIGNAL'
-    XYZ = 'XYZ'
-    channel_arr = [RANGE, SIGNAL, NEAR_IR, REFLECTIVITY]  # exact order of fields
 
 
 def write(hm: Dict[_K, _T], k: _K, v: _T):
@@ -188,13 +133,6 @@ class FileUtils:
                 os.makedirs(final_directory)
 
 
-class MatrixCloud:
-    def __init__(self):
-        self.timestamps = None
-        self.clouds = {'xyz': None}
-        self.channels = {}
-
-
 class Cloud3dUtils:
 
     @staticmethod
@@ -240,14 +178,21 @@ class ArrayUtils:
 
 
 class IO:
+    """
+    IO class contains composite methods for reading input data
+    from specific sensor brands using proprietary tools and utilities
+    """
     @staticmethod
-    def ouster(state: State, file, out_ls: PopList):
+    def ouster(args: Namespace, file, out_ls: PopList):
         metadata = client.SensorInfo(file.read())
-        source = pcap.Pcap(state.args.input, metadata)
-        Convertor.ouster_pcap_to_mxc(source, metadata, frame_ls=out_ls, N=state.args.N)
+        source = pcap.Pcap(args.input, metadata)
+        Convertor.ouster_pcap_to_mxc(source, metadata, frame_ls=out_ls, N=args.N)
 
 
 class Convertor:
+    """
+
+    """
     @staticmethod
     def ouster_pcap_to_mxc(source: client.PacketSource, metadata: client.SensorInfo, frame_ls: PopList, N: int = 1,
                            ) -> List[MatrixCloud]:

@@ -49,24 +49,24 @@ class PopList(List):
         self.append(__object)
         self._notify_all()
 
-    def get(self, ix: int, e: Event = None) -> _T:
+    def get(self, ix: int, event: Event = None) -> _T:
         """
         Appends threads Event object to waiting list if reached list end
 
         Parameters
         ----------
         ix
-        e
+        event
 
         Returns
         -------
 
         """
         while ix == len(self):
-            self._event_ls_.add(e)
-            e.wait()
-            e.clear()
-            self._event_ls_.remove(e)
+            self._event_ls_.add(event)
+            event.wait()
+            event.clear()
+            self._event_ls_.remove(event)
         return self[ix]
 
     @synchronized
@@ -103,3 +103,19 @@ class PopList(List):
             event.set()
 
         list(map(notify, self._event_ls_.copy()))
+
+
+class Ch:
+    RANGE = 'RANGE'
+    NEAR_IR = 'NEAR_IR'
+    REFLECTIVITY = 'REFLECTIVITY'
+    SIGNAL = 'SIGNAL'
+    XYZ = 'XYZ'
+    channel_arr = [RANGE, SIGNAL, NEAR_IR, REFLECTIVITY]  # exact order of fields
+
+
+class MatrixCloud:
+    def __init__(self):
+        self.timestamps = None
+        self.clouds = {'xyz': None}
+        self.channels = {}

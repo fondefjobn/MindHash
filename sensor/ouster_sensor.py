@@ -6,7 +6,9 @@ from queue import Queue, Full
 from typing import List
 from ouster import client as cl, pcap
 from ouster.client import LidarPacket
-from utilities.utils import FileUtils, Cloud3dUtils, Ch, MatrixCloud
+from utilities.utils import FileUtils, Cloud3dUtils
+from tools.structs.custom_structs import Ch, MatrixCloud
+
 default_pcap: str = '/pcap'
 default_metadata: str = '/metadata'
 

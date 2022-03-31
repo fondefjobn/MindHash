@@ -6,7 +6,7 @@ PIPELINES:
       # see PopList doc
       PRODUCER:
         - ID: UserInput
-          BUNDLE: UTILS_BUNDLE
+          BUNDLE: SENSOR_BUNDLE
           MT: True # Multithreading producer
       CONSUMER: # List of routines consuming from list
         - ID: ListProcessor
@@ -25,7 +25,7 @@ PIPELINES:
         - ID: ExportLocal
           BUNDLE: UTILS_BUNDLE
           MT: True
-      IO: mxc_to_npy
+      IO: to_pcdet
     - ID: PREDICTIONS
       PRODUCER:
         - ID: Evaluate

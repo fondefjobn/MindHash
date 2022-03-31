@@ -1,31 +1,33 @@
 import argparse
-import glob
 import json
+import sys
 from pathlib import Path
+from threading import Event
 from time import sleep
-from open3d.cpu.pybind.visualization import Visualizer
-from pcdet.config import cfg, cfg_from_yaml_file
-from tools.pipes.p_template import State, SAd, RoutineSet
-from OpenPCDet.tools.visual_utils.open3d_vis_utils import draw_box
-
-try:
-    import open3d
-
-    OPEN3D_FLAG = True
-except:
-    import mayavi.mlab as mlab
-    from OpenPCDet.tools.visual_utils import visualize_utils as V, open3d_vis_utils as V
-
-    OPEN3D_FLAG = False
 
 import numpy as np
+import open3d
 import torch
+from open3d.cpu.pybind.visualization import Visualizer
+
+from OpenPCDet.tools.visual_utils.open3d_vis_utils import draw_box
+from OpenPCDet.pcdet.config import cfg, cfg_from_yaml_file
 from pcdet.datasets import DatasetTemplate
 from pcdet.models import build_network, load_data_to_gpu
 from pcdet.utils import common_utils
+from tools.pipes.p_template import State, RoutineSet
+from tools.structs.custom_structs import PopList
+
+OPEN3D_FLAG = True
+base_path = Path(__file__).parent
+file_path = "../OpenPCDet/tools/"
+ds_cfgs = {
+    'PVRCNN': "cfgs/kitti_models/pv_rcnn.yaml"
+}
 
 
 class Routines(RoutineSet):
+    def_npy = 'MindHash/OpenPCDet/tools/format.npy'
 
     def id(self):
         return 'EVAL_BUNDLE'
@@ -33,12 +35,23 @@ class Routines(RoutineSet):
     def Evaluate(self, state: State, *args):
         npy_ls = args[1]
         x = 0
-        while x < len(npy_ls) or not npy_ls.full():
-            pass
+        sys.path.append(state.args.mlpath)
+        sys.path.append(self.def_npy)
+        logger = common_utils.create_logger()
+        config = str((base_path / ds_cfgs[state.args.ml]).resolve())
+        config = cfg_from_yaml_file(config, cfg, rel_path=file_path)
+        dyn_dataset = DemoDataset(config.DATA_CONFIG, class_names=config.CLASS_NAMES, training=False,
+                                  root_path=(base_path / self.def_npy).resolve(), logger=logger,
+                                  frames=args[0])
+        model = build_net(state.args.mlpath, dyn_dataset,
+                          logger, config=config)
+        with torch.no_grad():
+            while x < len(npy_ls) or not npy_ls.full():
+                evaluate(model, dyn_dataset, logger=logger)
 
 
 class DemoDataset(DatasetTemplate):
-    def __init__(self, dataset_cfg, class_names, training=True, root_path=None, logger=None, ext='.bin'):
+    def __init__(self, dataset_cfg, class_names, training=True, root_path=None, logger=None, ext='.npy', frames=None):
         """
         Args:
             root_path:
@@ -50,12 +63,9 @@ class DemoDataset(DatasetTemplate):
         super().__init__(
             dataset_cfg=dataset_cfg, class_names=class_names, training=training, root_path=root_path, logger=logger
         )
-        self.root_path = root_path
+        self.frames: PopList = frames
+        self.event = Event()
         self.ext = ext
-        data_file_list = glob.glob(str(root_path / f'*{self.ext}')) if self.root_path.is_dir() else [self.root_path]
-
-        data_file_list.sort()
-        self.sample_file_list = data_file_list
 
     def __len__(self):
         return len(self.sample_file_list)
@@ -64,7 +74,7 @@ class DemoDataset(DatasetTemplate):
         if self.ext == '.bin':
             points = np.fromfile(self.sample_file_list[index], dtype=np.float32).reshape(-1, 4)
         elif self.ext == '.npy':
-            points = np.load(self.sample_file_list[index])
+            points = self.frames.get(index, self.event)
         else:
             raise NotImplementedError
         input_dict = {
@@ -138,19 +148,18 @@ obj_labels = {
 
 
 def evaluate(model, dataset, logger):
-    with torch.no_grad():
-        for idx, data_dict in enumerate(dataset):
-            logger.info(f'Visualized sample index: \t{idx + 1}')
-            data_dict = dataset.collate_batch([data_dict])
-            load_data_to_gpu(data_dict)
-            pred_dicts, _ = model.forward(data_dict)
-            out = {
-                'ref_boxes': pred_dicts[0]['pred_boxes'].cpu().tolist(),
-                'ref_scores': pred_dicts[0]['pred_scores'].cpu().tolist(),
-                'ref_labels': [obj_labels[x] for x in pred_dicts[0]['pred_labels'].cpu().tolist()]
-            }
-            logger.info('Processing done.')
-            return out
+    for idx, data_dict in enumerate(dataset):
+        logger.info(f'Visualized sample index: \t{idx + 1}')
+        data_dict = dataset.collate_batch([data_dict])
+        load_data_to_gpu(data_dict)
+        pred_dicts, _ = model.forward(data_dict)
+        out = {
+            'ref_boxes': pred_dicts[0]['pred_boxes'].cpu().tolist(),
+            'ref_scores': pred_dicts[0]['pred_scores'].cpu().tolist(),
+            'ref_labels': [obj_labels[x] for x in pred_dicts[0]['pred_labels'].cpu().tolist()]
+        }
+        logger.info('Processing done.')
+        return out
 
 
 def main():
