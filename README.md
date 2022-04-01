@@ -1,22 +1,31 @@
 # MindHash
 
-tested on Ubuntu LTS 20.04, python 3.8 , RTX 2060 , cuda-11.6\
+#How to install
 
-use python 3.8/3.9 \
+Tested on Ubuntu LTS 20.04, python 3.8 , RTX 2060/GTX 1080 , cuda-11.6
 
-use venv virtual environment \
+Use python 3.8/3.9
 
-add `export PYTHONPATH="${PYTHONPATH}:{/absolute/path/to/project}"` to `venv/bin/activate` \
+Use venv virtual environment
 
-source `venv/bin/activate`\
+Pycharm can be used to set up the virtual environment:\
+https://www.jetbrains.com/help/pycharm/creating-virtual-environment.html
 
-pip install -r requirements \
+Add `export PYTHONPATH="${PYTHONPATH}:{/absolute/path/to/project}"` to `venv/bin/activate` 
 
-install cuda-toolkit 11.6 & `export CUDA_HOME=/usr/local/cuda` or /path/to/your/cuda (folder from root dir)\
+Source the virtual environment:\
+`source venv/bin/activate`
 
-install torch & torchvision with:\
-`pip3 install torch==1.11.0+cu113 torchvision==0.12.0+cu113 torchaudio==0.11.0+cu113 -f https://download.pytorch.org/whl/cu113/torch_stable.html`
+Install required packages:\
+`pip install -r requirements.txt` 
 
-follow installation guide in OpenPCDet (ignore spconv & open3d requirements - right version already installed) \
+Install cuda-toolkit 11.6 & `export CUDA_HOME=/usr/local/cuda` or /path/to/your/cuda (folder from root dir)
 
-done
+Install torch & torchvision with:\
+`pip3 install torch==1.10.0+cu113 torchvision==0.11.0+cu113 torchaudio==0.10.0+cu113 -f https://download.pytorch.org/whl/cu113/torch_stable.html`
+
+Install OpenPCDet:\
+`cd OpenPCDet`\
+`python setup.py develop`
+
+Done

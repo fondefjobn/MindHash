@@ -12,4 +12,4 @@ scikit-image
 tqdm
 ouster-sdk[examples]
 spconv-cu114
-SharedArray
+SharedArray==3.1
