@@ -5,7 +5,11 @@ from tools.pipes import RoutineSet, State
 from tools.structs.custom_structs import PopList
 from utilities.utils import FileUtils as Fs, \
     Cloud3dUtils
-
+"""
+@Module: Stream Processor
+@Description: Provides functionalities for data filtering and augmentation tasks
+@Author: Radu Rebeja
+"""
 
 class ConfigMap:
     """"""
@@ -27,25 +31,45 @@ Q = Queue
 ################
 
 class Routines(RoutineSet):
-
+    """
+    Bundle for routines used to operate with StreamProcessor
+    """
     def id(self):
         return 'PROCESS_BUNDLE'
 
-    def ListProcessor(self, state: State, *args): #abstract to methods
+    def list_processing(self, state: State, *args): #abstract to methods
+        """
+        Routine to read from a parsed list of PopList elements
+        and output to an allocated PopList
+        Parameters
+        ----------
+        state
+        args
+
+        Returns
+        -------
+
+        """
         in_ls: PopList = args[0]
         out_ls: PopList = args[1]
         sp: StreamProcessor = StreamProcessor(in_ls, out_ls)
         x = 0
         e = Event()
-        while x < len(in_ls) or not in_ls.full():
+        while not in_ls.full(x):
             out = in_ls.get(x, e)
             sp.read_stream(out)
             x += 1
         out_ls.set_full()
-        Routines.logging.info(msg='ListProcessor: done')
+        Routines.log.info(msg='ListProcessor: done')
 
 
 class StreamProcessor:
+    """
+    StreamProcessor
+    Executes data filtering and augmentation tasks
+    Configuration file establishes the behavior of this class
+    See Also config.yaml within package
+    """
     config: dict = None
     idle: bool = False
     in_ls: PopList

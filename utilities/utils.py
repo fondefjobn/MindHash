@@ -11,7 +11,13 @@ from ouster import client as cl
 from yaml import SafeLoader
 
 from tools.structs.custom_structs import PopList, Ch, MatrixCloud
+"""
+@Module: Utilities
+@Description: Provides general utility functions
+@Author: Radu Rebeja
+"""
 
+# Global variables
 def_numpy: str = '../resources/output/numpy'
 def_json: str = '../resources/output/json'
 def_pcap: str = '../resources/output/pcap_out'
@@ -19,13 +25,11 @@ _T = TypeVar("_T")
 _K = TypeVar("_K")
 
 """
-Utilities Module
+
 if classes become bloated we split per module
 """
+
 logging.basicConfig(format='%(levelname)s:%(message)s', level=logging.CRITICAL)
-
-
-
 
 
 def write(hm: Dict[_K, _T], k: _K, v: _T):
@@ -177,36 +181,11 @@ class ArrayUtils:
         return (data - np.min(data)) / (np.max(data) - np.min(data))
 
 
-class IO:
-    """
-    IO class contains composite methods for reading input data
-    from specific sensor brands using proprietary tools and utilities
-    """
-    @staticmethod
-    def ouster(args: Namespace, file, out_ls: PopList):
-        metadata = client.SensorInfo(file.read())
-        source = pcap.Pcap(args.input, metadata)
-        Convertor.ouster_pcap_to_mxc(source, metadata, frame_ls=out_ls, N=args.N)
 
 
-class Convertor:
-    """
 
-    """
-    @staticmethod
-    def ouster_pcap_to_mxc(source: client.PacketSource, metadata: client.SensorInfo, frame_ls: PopList, N: int = 1,
-                           ) -> List[MatrixCloud]:
-        # [doc-stag-pcap-to-csv]
-        from itertools import islice
-        # precompute xyzlut to save computation in a loop
-        xyzlut = client.XYZLut(metadata)
-        # create an iterator of LidarScans from pcap and bound it if num is specified
-        scans = iter(client.Scans(source))
-        if N:
-            scans = islice(scans, N)
-        for idx, scan in enumerate(scans):
-            frame_ls.add(Cloud3dUtils.get_matrix_cloud(xyzlut, scan, Ch.channel_arr))
-        return frame_ls
+
+
 
 
 parserMap = {

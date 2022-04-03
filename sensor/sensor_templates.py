@@ -1,2 +1,0 @@
-class Sensor:
-    pass

@@ -1,21 +1,21 @@
 PIPELINES:
   DISABLE_RT_LIST: [ 'placeholder' ]
   POPLIST:
-    - ID: USER_INPUT
+    - ID: USER_INPUT #PopList ID
       # List of routines producing to this list (ID = method name)
       # see PopList doc
       PRODUCER:
-        - ID: UserInput  # change this to support different producer routines based on args
-          BUNDLE: SENSOR_BUNDLE
+        - ID: user_input # method_X name
+          BUNDLE: SENSOR_BUNDLE #given ID for your class wrapping the method_X
           MT: True # Multithreading producer
       CONSUMER: # List of routines consuming from list
-        - ID: ListProcessor
+        - ID: list_processor # here method_X as consumer
           BUNDLE: PROCESS_BUNDLE
           MT: True # Multithreading consumer
       IO: pcap_to_mxc
     - ID: PROCESSED_INPUT
       PRODUCER:
-        - ID: ListProcessor
+        - ID: list_processor # here method_X as producer
           BUNDLE: PROCESS_BUNDLE
           MT: True
       CONSUMER:
@@ -43,4 +43,6 @@ PIPELINES:
 ###       - ID: ExportLocal
 #          BUNDLE: UTILS_BUNDLE
 #          MT: True
-#(not supporting multiple context sibling threads yet , e.g. multiple ExportLocal routines of different values)
+# not supporting multiple context identical threads yet .
+# e.g. multiple ExportLocal routines of different values
+# might require a work-around

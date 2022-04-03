@@ -11,7 +11,7 @@ from OpenPCDet.pcdet.config import cfg, cfg_from_yaml_file
 from pcdet.datasets import DatasetTemplate
 from pcdet.utils import common_utils
 
-from OpenPCDet.tools.evaluate import build_net, DemoDataset, evaluate
+from OpenPCDet.tools.evaluate import build_net, EvalDataset, evaluate
 from utilities.mh_parser import SAParser
 from .forms import sendableFile
 import numpy
@@ -22,7 +22,7 @@ data = relative_path + 'format.npy'
 ext = '.npy'
 logger = common_utils.create_logger()
 config = cfg_from_yaml_file(cfg_file, cfg, rel_path=relative_path)
-demo_dataset = DemoDataset(
+demo_dataset = EvalDataset(
     dataset_cfg=config.DATA_CONFIG, class_names=config.CLASS_NAMES, training=False,
     root_path=Path(data), ext=ext, logger=logger
 )

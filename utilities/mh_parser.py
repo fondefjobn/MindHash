@@ -1,7 +1,13 @@
+
+"""
+@Module: PCDet to MindHash JSON parser
+@Description: Parses PCDet evaluation tool predictions output to MindHash JSON output template
+@Author: Lubor Budaj
+"""
+
 class SAParser:
     """
     Parser for MindHash client StreetAnalytics work specific output
-    @Author Lubor Budaj
     """
 
     def __init__(self, output):

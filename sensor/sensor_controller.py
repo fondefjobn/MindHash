@@ -1,9 +1,19 @@
+from argparse import Namespace
 from typing import List, Optional, Union
 
-from sensor.ouster_sensor import _IO, SensorParams
+from ouster import client, pcap
+
+from sensor.ouster_sensor import _IO_, SensorParams
 from tools.pipes import State, RoutineSet
-from tools.structs.custom_structs import PopList
-from utilities.utils import IO, FileUtils
+from tools.structs.custom_structs import PopList, MatrixCloud, Ch
+from utilities.utils import FileUtils, Cloud3dUtils
+
+"""
+@Module: Sensor Controller
+@Description: Tool for using 
+See Also Architecture document on Pipelines
+@Author: Radu Rebeja
+"""
 
 
 class Routines(RoutineSet):
@@ -25,7 +35,7 @@ class Routines(RoutineSet):
         controller = SensorController(params)
         controller.start_stream()
 
-    def UserInput(self, state: State, *args):
+    def user_input(self, state: State, *args):
         """
         Routine: User Input File post-process
 
@@ -41,18 +51,21 @@ class Routines(RoutineSet):
         -------
 
         """
-        with open(state.args.meta, 'r') as f:
-            out_ls: PopList = args[1]
-            getattr(IO, state.args.sensor)(state.args, f, out_ls)
-            out_ls.set_full()
-        Routines.logging.info(msg='UserInput reading: done')
+        if not state.args.live:
+            with open(state.args.meta, 'r') as f:
+                out_ls: PopList = args[1]
+                getattr(IO, state.args.sensor)(state.args, f, out_ls)
+                out_ls.set_full()
+            Routines.logging.info(msg='UserInput reading: done')
+        else:
+            self.LiveStream(state, args)
 
 
 default_sens_config = 'sensor/sensor_config.yaml'
-default_stream_config = 'sensor/stream_config.yaml'
+default_stream_config = 'sensor/config.yaml'
 
 
-class SensorController:
+class SensorController(IO):
     """SensorController"""
 
     def __init__(self, config: Optional[Union[dict, str]]):
@@ -61,7 +74,7 @@ class SensorController:
             c_dict = FileUtils.load_file(config, ext='yaml')
         else:
             c_dict = config
-        self._io = _IO(SensorParams(c_dict))
+        self._io = _IO_(SensorParams(c_dict))  # apply reflectance on ouster IO
 
     def start_stream(self):
         self._io.stream_scans()
@@ -71,3 +84,27 @@ class SensorController:
 
     def connect(self):
         pass
+
+
+
+
+
+class Convertor:
+    """
+
+    """
+
+    @staticmethod
+    def ouster_pcap_to_mxc(source: client.PacketSource, metadata: client.SensorInfo, frame_ls: PopList, N: int = 1,
+                           ) -> List[MatrixCloud]:
+        # [doc-stag-pcap-to-csv]
+        from itertools import islice
+        # precompute xyzlut to save computation in a loop
+        xyzlut = client.XYZLut(metadata)
+        # create an iterator of LidarScans from pcap and bound it if num is specified
+        scans = iter(client.Scans(source))
+        if N:
+            scans = islice(scans, N)
+        for idx, scan in enumerate(scans):
+            frame_ls.add(Cloud3dUtils.get_matrix_cloud(xyzlut, scan, Ch.channel_arr))
+        return frame_ls

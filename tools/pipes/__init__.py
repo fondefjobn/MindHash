@@ -1,2 +1,2 @@
 from .pipelines import *
-from .p_template import *
+from .templates import *
