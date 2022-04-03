@@ -3,7 +3,8 @@ from typing import List, Optional, Union
 
 from ouster import client, pcap
 
-from sensor.ouster_sensor import _IO_, SensorParams
+from sensor.sensor_template import Sensor
+from sensor.sensor_set import __all__
 from tools.pipes import State, RoutineSet
 from tools.structs.custom_structs import PopList, MatrixCloud, Ch
 from utilities.utils import FileUtils, Cloud3dUtils
@@ -23,18 +24,7 @@ class Routines(RoutineSet):
 
     channels: List[int] = [1, 2, 3, 4]
 
-    def LiveStream(self, state: State, *args):  # to be deprecated in favor of united method for any input
-        out_ls = args[1]
-        params = {
-            "hostname": state.args.host,
-            "lidar_port": state.args.port,
-            "imu_port": 7503,
-            "sample_rate": 0,
-            "output": out_ls
-        }
-        controller = SensorController(params)
-        controller.start_stream()
-
+    @RoutineSet.full
     def user_input(self, state: State, *args):
         """
         Routine: User Input File post-process
@@ -51,60 +41,35 @@ class Routines(RoutineSet):
         -------
 
         """
+        out_ls: PopList = args[1]
+        sensor: Sensor = __all__[state.args.sensor](state.args, out_ls)
         if not state.args.live:
-            with open(state.args.meta, 'r') as f:
-                out_ls: PopList = args[1]
-                getattr(IO, state.args.sensor)(state.args, f, out_ls)
-                out_ls.set_full()
-            Routines.logging.info(msg='UserInput reading: done')
+            sensor.convert()
         else:
-            self.LiveStream(state, args)
+            sensor.read()
+        Routines.log.info(msg='UserInput reading: done')
+        return out_ls
 
 
-default_sens_config = 'sensor/sensor_config.yaml'
+default_sens_config = 'sensor/config.yaml'
 default_stream_config = 'sensor/config.yaml'
 
 
-class SensorController(IO):
+class SensorController(object):
     """SensorController"""
 
-    def __init__(self, config: Optional[Union[dict, str]]):
+    def __init__(self, config: Optional[Union[dict, str]], sensor: Sensor):
         c_dict: dict
         if isinstance(config, str):
             c_dict = FileUtils.load_file(config, ext='yaml')
         else:
             c_dict = config
-        self._io = _IO_(SensorParams(c_dict))  # apply reflectance on ouster IO
 
     def start_stream(self):
-        self._io.stream_scans()
+        self._IO_.read()
 
     def stop_stream(self):
         pass
 
     def connect(self):
         pass
-
-
-
-
-
-class Convertor:
-    """
-
-    """
-
-    @staticmethod
-    def ouster_pcap_to_mxc(source: client.PacketSource, metadata: client.SensorInfo, frame_ls: PopList, N: int = 1,
-                           ) -> List[MatrixCloud]:
-        # [doc-stag-pcap-to-csv]
-        from itertools import islice
-        # precompute xyzlut to save computation in a loop
-        xyzlut = client.XYZLut(metadata)
-        # create an iterator of LidarScans from pcap and bound it if num is specified
-        scans = iter(client.Scans(source))
-        if N:
-            scans = islice(scans, N)
-        for idx, scan in enumerate(scans):
-            frame_ls.add(Cloud3dUtils.get_matrix_cloud(xyzlut, scan, Ch.channel_arr))
-        return frame_ls

@@ -4,9 +4,32 @@ Not yet implemented.
 """
 from abc import ABC, abstractmethod
 
+from tools.structs import PopList
+
 
 class Sensor(ABC):
+    """
+    Sensor template
+    Any new sensor added to alternative inputs set must be
+    subclassed by this class
+    """
+
+    @abstractmethod
+    def read(self):
+        """
+        Function for any live reading
+        Returns
+        -------
+
+        """
+        return self.read.__name__
 
     @abstractmethod
     def convert(self):
-        pass
+        """
+           Function for any post-processing readings
+           Returns
+           -------
+
+           """
+        return self.convert.__name__

@@ -48,6 +48,18 @@ class RoutineSet(object):
     logging.basicConfig(format='%(levelname)s:%(message)s', level=logging.INFO)
     log = logging
 
+    @classmethod
+    def poplist_loop(cls, fnc):
+        pass
+
+    @classmethod
+    def full(cls, fnc):
+        def f(state, *args):
+            ls: PopList = fnc(state, *args)
+            ls.set_full(True)
+
+        return f
+
     @abstractmethod
     def id(self):
         return None

@@ -37,7 +37,7 @@ class Routines(RoutineSet):
     def id(self):
         return 'PROCESS_BUNDLE'
 
-    def list_processing(self, state: State, *args): #abstract to methods
+    def list_processor(self, state: State, *args): #abstract to methods
         """
         Routine to read from a parsed list of PopList elements
         and output to an allocated PopList
