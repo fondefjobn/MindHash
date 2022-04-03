@@ -8,14 +8,18 @@ from ouster import client as cl, pcap
 from ouster.client import LidarPacket
 from requests import get
 
+from sensor.sensor_template import Sensor
 from utilities.utils import FileUtils, Cloud3dUtils
 from tools.structs.custom_structs import Ch, MatrixCloud, PopList
 
 default_pcap: str = '/pcap'
 default_metadata: str = '/metadata'
 
-
-# all_channels: list[cl.ChanField] = [cl.ChanField.RANGE, cl.ChanField.NEAR_IR, cl.ChanField.REFLECTIVITY]  # immutable
+"""
+@Module: Ouster Sensor 
+@Description: Tools for livestreaming from an Ouster Sensor
+@Author: Radu Rebeja
+"""
 
 class SensorCommand:
     pass
@@ -47,7 +51,7 @@ class SensorParams:
         self.sample_rate = config['sample_rate']
 
 
-class _IO:
+class _IO_(Sensor):
     source: cl.PacketSource = None
 
     def __init__(self, params: SensorParams):
@@ -115,13 +119,20 @@ class _IO:
 
 
 default_sens_config = 'sensor/sensor_config.yaml'
-default_stream_config = 'sensor/stream_config.yaml'
+default_stream_config = 'sensor/config.yaml'
 
-sensor_ip = '192.168.178.11'
-sensor_port = 7502
 
 
 def main():
+    """
+    Script testing function
+    Returns void
+    -------
+
+    """
+    sensor_ip = '192.168.178.11'
+    sensor_port = 7502
+
     q: PopList[MatrixCloud] = PopList()
     params = {
         'hostname': sensor_ip,
@@ -129,8 +140,8 @@ def main():
         'sample_rate': 1
     }
 
-    io = _IO(SensorParams(params))
-    io.stream_scans(q, params)
+    io = _IO_(SensorParams(params))
+    io.stream_scans()
 
 
 if __name__ == "__main__":

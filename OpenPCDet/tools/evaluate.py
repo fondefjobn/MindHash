@@ -15,7 +15,7 @@ from OpenPCDet.pcdet.config import cfg, cfg_from_yaml_file
 from pcdet.datasets import DatasetTemplate
 from pcdet.models import build_network, load_data_to_gpu
 from pcdet.utils import common_utils
-from tools.pipes.p_template import State, RoutineSet
+from tools.pipes.templates import State, RoutineSet
 from tools.structs.custom_structs import PopList
 
 OPEN3D_FLAG = True
@@ -33,23 +33,22 @@ class Routines(RoutineSet):
         return 'EVAL_BUNDLE'
 
     def Evaluate(self, state: State, *args):
-        npy_ls = args[1]
+        npy_ls: PopList = args[1]
         x = 0
         logger = common_utils.create_logger()
         config = str((base_path / ds_cfgs[state.args.ml]).resolve())
         config = cfg_from_yaml_file(config, cfg, rel_path=file_path)
-        dyn_dataset = DemoDataset(config.DATA_CONFIG, class_names=config.CLASS_NAMES, training=False,
+        dyn_dataset = EvalDataset(config.DATA_CONFIG, class_names=config.CLASS_NAMES, training=False,
                                   root_path=(base_path / self.def_npy).resolve(), logger=logger,
                                   frames=args[0])
         model = build_net(state.args.mlpath, dyn_dataset,
                           logger, config=config)
         with torch.no_grad():
             x = 0
-            while not (args[0].full() and x > len(args[0])):#Merge this
+            while not args[0].full(x):
                 data_dict = dyn_dataset[x]
                 logger.info(f'Processed frame index: \t{x + 1}')
                 data_dict = dyn_dataset.collate_batch([data_dict])
-
                 load_data_to_gpu(data_dict)
                 pred_dicts, _ = model.forward(data_dict)
                 out = {
@@ -65,7 +64,7 @@ class Routines(RoutineSet):
                 json.dump(npy_ls, f)
 
 
-class DemoDataset(DatasetTemplate):
+class EvalDataset(DatasetTemplate):
     def __init__(self, dataset_cfg, class_names, training=True, root_path=None, logger=None, ext='.npy', frames=None):
         """
         Args:
@@ -86,12 +85,7 @@ class DemoDataset(DatasetTemplate):
         return len(self.sample_file_list)
 
     def __getitem__(self, index):
-        if self.ext == '.bin':
-            points = np.fromfile(self.sample_file_list[index], dtype=np.float32).reshape(-1, 4)
-        elif self.ext == '.npy':
-            points = self.frames.get(index, self.event)
-        else:
-            raise NotImplementedError
+        points = self.frames.get(index, self.event)
         input_dict = {
             'points': points,
             'frame_id': index,
@@ -162,25 +156,10 @@ obj_labels = {
 }
 
 
-def evaluate(model, dataset, logger):
-    for idx, data_dict in enumerate(dataset):
-        logger.info(f'Visualized sample index: \t{idx + 1}')
-        data_dict = dataset.collate_batch([data_dict])
-        load_data_to_gpu(data_dict)
-        pred_dicts, _ = model.forward(data_dict)
-        out = {
-            'ref_boxes': pred_dicts[0]['pred_boxes'].cpu().tolist(),
-            'ref_scores': pred_dicts[0]['pred_scores'].cpu().tolist(),
-            'ref_labels': [obj_labels[x] for x in pred_dicts[0]['pred_labels'].cpu().tolist()]
-        }
-        logger.info('Processing done.')
-        return out
-
-
 def main():
     args, cfg = parse_config()
     logger = common_utils.create_logger()
-    demo_dataset = DemoDataset(
+    demo_dataset = EvalDataset(
         dataset_cfg=cfg.DATA_CONFIG, class_names=cfg.CLASS_NAMES, training=False,
         root_path=Path(args.data_path), ext=args.ext, logger=logger
     )
@@ -201,13 +180,7 @@ def main():
             data_dict = demo_dataset.collate_batch([data_dict])
             load_data_to_gpu(data_dict)
             pred_dicts, _ = model.forward(data_dict)
-            #with open('../../resources/output/json/out.json', 'w') as f:
-             #   o = {
-              #      'ref_boxes': pred_dicts[0]['pred_boxes'].cpu().tolist(),
-             #       'ref_scores': pred_dicts[0]['pred_scores'].cpu().tolist(),
-             #       'ref_labels': pred_dicts[0]['pred_labels'].cpu().tolist()
-             #   }
-             #   json.dump(o, f)
+
             draw_scenes(vis, pts, points=data_dict['points'][:, 1:], ref_boxes=pred_dicts[0]['pred_boxes'],
                         ref_scores=pred_dicts[0]['pred_scores'],
                         ref_labels=pred_dicts[0]['pred_labels'])

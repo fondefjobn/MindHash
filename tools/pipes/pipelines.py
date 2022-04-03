@@ -8,17 +8,11 @@ from tools.structs import PopList
 from utilities.utils import FileUtils as fu
 
 """
-Tool module for building pipeline execution of functions
-Idea: The behavior of the execution is split in modules.
-Module execution input arguments vary, how to chain execution safe & clean?
-Solution: Sequential execution of separate routines sharing one state
-"""
-
-"""
-    Generates ordered list of all routines that may be part of the pipeline
-    Tuple associates a key from CLI argparse with a routine
-    If a routine existence is required, use anything as key except None
-    Arg/Any | Routine | isThreaded
+@Module: Pipelines
+@Description: Simple tool for building and execution of multithreading routines within a chained pipeline
+Chaining is achieved with IO PopLists that routines share for parallel list processing. 
+See Also Architecture document on Pipelines
+@Author: Radu Rebeja
 """
 
 # Dictionary of string values
@@ -27,9 +21,6 @@ PRODUCER: str = 'PRODUCER'
 CONSUMER: str = 'CONSUMER'
 _exec: str = 'exec'
 _mt: str = 'mt'
-
-
-
 
 
 def execute_pipeline(ls_pl: List[Thread]):
@@ -52,9 +43,11 @@ def execute_pipeline(ls_pl: List[Thread]):
         pl.start()
 
 
-def update_routines(bundles: dict, schema: dict, ls_cfg, role: str, pop_ls: list):
+def update_routines(bundles: dict, schema: dict, ls_cfg, role: str, pop_ls: PopList):
     """
-
+    v.1
+    Initialize missing routines from the list and update Producers and Consumers
+    for present instances by assigning either an Input or Output list.
     Parameters
     ----------
     pop_ls
@@ -81,19 +74,18 @@ def update_routines(bundles: dict, schema: dict, ls_cfg, role: str, pop_ls: list
                 }
         schema[obj_cfg.ID][role] = pop_ls
         return True
-
     list(map(update, ls_cfg))
 
 
-def build_pipeline( state, bundles) -> List:
+def build_pipeline(state, bundles) -> List[Thread]:
     """
-
+    Builds pipeline by iterating over the list of PopList dict objects in
+    the configuration dictionary. Updates at each step the pipeline chain
     Parameters
     ----------
-    state
-    args
-
-    Returns
+    bundles list of available bundles
+    state shared state containing execution arguments and values
+    Returns list of threads (not started)
     -------
 
     """

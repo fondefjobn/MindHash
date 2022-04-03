@@ -7,9 +7,11 @@ from numpy import iterable
 from wrapt import synchronized
 
 """
-Module for custom data structs
+@Module: Custom Data Structures
+@Description: Contains classes extending functionalities (Decorators) or offering new functionalities from scratch.
+Also contains data classes.
+@Author: Radu Rebeja
 """
-
 
 class PopList(List):
     """
@@ -71,14 +73,14 @@ class PopList(List):
         return self[ix]
 
     @synchronized
-    def full(self):
+    def full(self, i: int):
         """
         Checks if list is still updated
         Returns
         -------
-    `   True if list updating session finished
+    `   True - if list updating session finished
         """
-        return self._full_
+        return i >= len(self) and self._full_
 
     @synchronized
     def set_full(self, b: bool = True):
@@ -102,16 +104,21 @@ class PopList(List):
     def _notify_all(self):
         def notify(event: Event):
             event.set()
-
         list(map(notify, self._event_ls_.copy()))
+
 
 class MatrixCloud:
     """Our project standardization data-structure for point clouds.
-    All sensor outputs are converted to fit into this class"""
+    All sensor outputs are converted to fit data into this class
+    timestamps = array of float describing timestamp in UNIX epoch time
+    clouds = [[X],[Y],[Z]] shaped matrix
+    channels
+    """
 
     def __init__(self):
+
         self.timestamps = None
-        self.clouds = {'xyz': None}
+        self.clouds = {Ch.XYZ: None}
         self.channels = {
             Ch.NEAR_IR: None,
             Ch.SIGNAL: None,

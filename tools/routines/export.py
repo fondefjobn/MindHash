@@ -19,13 +19,16 @@ class Routines(RoutineSet):
 
          Requires: None
          """
-        Routines.logging.info(msg='Export:STARTED')
-        x = 0
-        e = Event()
-        in_ls = args[0]
-        FileUtils.Dir.mkdir_here(def_numpy)
-        while x < len(in_ls) or not in_ls.full():
-            out = in_ls.get(x, e)
-            FileUtils.Output.to_numpy(out, def_numpy, str(x))
-            x += 1
-        Routines.logging.info(msg='Export: done')
+        if any("clouds_npy" in o for o in state.args.export):
+            Routines.logging.info(msg='Export:STARTED')
+            x = 0
+            e = Event()
+            in_ls = args[0]
+
+            FileUtils.Dir.mkdir_here(def_numpy)
+            while not in_ls.full(x):
+                out = in_ls.get(x, e)
+                FileUtils.Output.to_numpy(out, def_numpy, str(x))
+                x += 1
+            Routines.logging.info(msg='Export: done')
+
