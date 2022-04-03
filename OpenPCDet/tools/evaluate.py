@@ -44,8 +44,25 @@ class Routines(RoutineSet):
         model = build_net(state.args.mlpath, dyn_dataset,
                           logger, config=config)
         with torch.no_grad():
-            while x < len(npy_ls) or not npy_ls.full():
-                evaluate(model, dyn_dataset, logger=logger)
+            x = 0
+            while not (args[0].full() and x > len(args[0])):#Merge this
+                data_dict = dyn_dataset[x]
+                logger.info(f'Processed frame index: \t{x + 1}')
+                data_dict = dyn_dataset.collate_batch([data_dict])
+
+                load_data_to_gpu(data_dict)
+                pred_dicts, _ = model.forward(data_dict)
+                out = {
+                    'ref_boxes': pred_dicts[0]['pred_boxes'].cpu().tolist(),
+                    'ref_scores': pred_dicts[0]['pred_scores'].cpu().tolist(),
+                    'ref_labels': pred_dicts[0]['pred_labels'].cpu().tolist()
+                }
+                o = {"points": args[0][x], "predictions": out}
+                npy_ls.add(o)
+                x += 1
+        if any("predictions" in o for o in state.args.export):  # } move this to export local
+            with open('../resources/output/json/out.json', 'w+') as f:
+                json.dump(npy_ls, f)
 
 
 class DemoDataset(DatasetTemplate):

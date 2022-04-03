@@ -28,4 +28,7 @@ Install OpenPCDet:\
 `cd OpenPCDet`\
 `python setup.py develop`
 
+TODO:\
+Add pretrained models and configs and testing data
+
 Done

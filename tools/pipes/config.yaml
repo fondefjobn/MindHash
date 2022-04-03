@@ -33,7 +33,7 @@ PIPELINES:
           MT: True
       CONSUMER:
         - ID: Visualization
-          BUNDLE: VIZ_BUNDLE
+          BUNDLE: VIS_BUNDLE
           MT: True
         - ID: Statistics
           BUNDLE: STAT_BUNDLE
