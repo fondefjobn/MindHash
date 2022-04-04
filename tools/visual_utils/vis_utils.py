@@ -17,16 +17,22 @@ box_colormap = [
     [1, 1, 0],
 ]
 
+CONFIG = "../tools/visual_utils/camera_cfg.json"
+
 
 class VisUtils:
     vis: open3d.visualization.Visualizer
-    previous_geometry: list = []
+    camera: open3d.camera
 
     def __init__(self):
         self.vis = open3d.visualization.Visualizer()
         self.vis.create_window()
         self.vis.get_render_option().point_size = 1.0
         self.vis.get_render_option().background_color = np.zeros(3)
+        self.get_camera_cfg()
+
+    def get_camera_cfg(self):
+        self.camera = open3d.io.read_pinhole_camera_parameters(CONFIG)
 
     def get_coor_colors(self, obj_labels):
         """
@@ -45,37 +51,17 @@ class VisUtils:
 
         return label_rgba
 
-    def remove_previous_geometry(self):
-        for previous in self.previous_geometry:
-            self.vis.remove_geometry(previous)
-        self.previous_geometry.clear()
-
     def reset_view(self):
         view_control = self.vis.get_view_control()
+        view_control.convert_from_pinhole_camera_parameters(self.camera)
 
-        camera = view_control.convert_to_pinhole_camera_parameters()
-        camera.extrinsic = np.array([
-            [0, -1, 0, 0],
-            [0, 0, -1, 0],
-            [1, 0, 0, 15],
-            [0, 0, 0, 1]
-        ])
-        view_control.convert_from_pinhole_camera_parameters(camera)
-
-    def draw_scenes(self, points, gt_boxes=None, ref_boxes=None, ref_labels=None, ref_scores=None, point_colors=None,
-                    draw_origin=True):
+    def draw_scenes(self, points, gt_boxes=None, ref_boxes=None, ref_labels=None, ref_scores=None, point_colors=None):
         vis = self.vis
-        # draw origin
-        if draw_origin:
-            axis_pcd = open3d.geometry.TriangleMesh.create_coordinate_frame(size=1.0, origin=[0, 0, 0])
-            vis.add_geometry(axis_pcd)
-
-        self.remove_previous_geometry()
+        vis.clear_geometries()
 
         pts = open3d.geometry.PointCloud()
         pts.points = open3d.utility.Vector3dVector(points[:, :3])
         vis.add_geometry(pts)
-        self.previous_geometry.append(pts)
 
         if point_colors is None:
             pts.colors = open3d.utility.Vector3dVector(np.ones((points.shape[0], 3)))
@@ -83,10 +69,10 @@ class VisUtils:
             pts.colors = open3d.utility.Vector3dVector(point_colors)
 
         if gt_boxes is not None:
-            vis = self.draw_box(vis, gt_boxes, (0, 0, 1))
+            self.draw_box(gt_boxes, (0, 0, 1))
 
         if ref_boxes is not None:
-            vis = self.draw_box(vis, ref_boxes, (0, 1, 0), ref_labels, ref_scores)
+            self.draw_box(ref_boxes, (0, 1, 0), ref_labels, ref_scores)
 
         self.reset_view()
         vis.poll_events()
@@ -118,7 +104,7 @@ class VisUtils:
 
         return line_set, box3d
 
-    def draw_box(self, vis, gt_boxes, color=(0, 1, 0), ref_labels=None, score=None):
+    def draw_box(self, gt_boxes, color=(0, 1, 0), ref_labels=None, score=None):
         for i in range(gt_boxes.shape[0]):
             line_set, box3d = self.translate_boxes_to_open3d_instance(gt_boxes[i])
             if ref_labels is None:
@@ -126,6 +112,4 @@ class VisUtils:
             else:
                 line_set.paint_uniform_color(box_colormap[ref_labels[i]])
 
-            vis.add_geometry(line_set)
-            self.previous_geometry.append(line_set)
-        return vis
+            self.vis.add_geometry(line_set)

@@ -8,7 +8,7 @@ from tools.visual_utils import vis_utils
 
 """
 @Module: Visualization 
-@Description: 
+@Description: Tool for visualizing the pointcloud and the results of the evaluation in 3D
 @Author: Bob
 """
 
