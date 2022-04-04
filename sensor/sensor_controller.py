@@ -56,7 +56,8 @@ default_stream_config = 'sensor/config.yaml'
 
 
 class SensorController(object):
-    """SensorController"""
+    """SensorController
+    Anything spicy you want to do with your sensor happens here"""
 
     def __init__(self, config: Optional[Union[dict, str]], sensor: Sensor):
         c_dict: dict

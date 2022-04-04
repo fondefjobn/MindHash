@@ -1,5 +1,6 @@
 from argparse import Namespace
 from abc import ABC, abstractmethod
+from threading import Event
 
 from tools.structs import PopList
 
@@ -47,15 +48,38 @@ class RoutineSet(object):
     import logging
     logging.basicConfig(format='%(levelname)s:%(message)s', level=logging.INFO)
     log = logging
+    lspos = 2  # starting position for pop-list tuple
+
+    def __init__(self):
+        self.event = Event()
 
     @classmethod
-    def poplist_loop(cls, fnc):
-        pass
+    def poplist_loop(cls, arg: int, ix: str):
+        """
+        Decorator function
+
+        Additional loop functionality here - list clearing , closing ceremonies"""
+
+        def loop(fnc):
+            def f(*args):
+                st = 1
+                ls = 2 + arg
+                args[st][ix] = 0
+                while not args[ls].full(args[st][ix]):
+                    fnc(*args)
+                    args[st][ix] += 1
+                args[ls].set_full(True)
+
+            return f
+
+        return loop
 
     @classmethod
     def full(cls, fnc):
-        def f(state, *args):
-            ls: PopList = fnc(state, *args)
+        def f(*args):
+            ls: PopList = fnc(*args)
+            print(ls, 'setting true')
+
             ls.set_full(True)
 
         return f
