@@ -1,3 +1,4 @@
+
 # MindHash
 @Authors: Radu Rebeja, Nevis King
 
@@ -52,6 +53,5 @@ the ArgumentParser documentation
 | streamproccessor       | Provides functionalities for data filtering and augmentation tasks                                                        |
 | tools                  | Pipeline and utilities                                                                                                    |
 | visualizer             | Visualizer for lidar data as well as the bounding boxes produced by the models                                            |
-
 
 
