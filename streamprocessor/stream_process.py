@@ -60,7 +60,6 @@ class Routines(RoutineSet):
         sp: StreamProcessor = StreamProcessor(args[0], args[1])
         out = args[0].get(state['x'], self.event)
         sp.read_stream(out)
-        Routines.log.info(msg='ListProcessor: done')
 
 
 class StreamProcessor:

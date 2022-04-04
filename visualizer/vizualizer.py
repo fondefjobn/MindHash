@@ -1,14 +1,16 @@
-from threading import Event
+from time import sleep
 
 import numpy as np
-import open3d
-import torch
-from open3d.visualization import Visualizer as Viz
 
 from tools.pipes import RoutineSet
 from tools.structs import PopList
-from OpenPCDet.tools.visual_utils.open3d_vis_utils import draw_box
+from tools.visual_utils import vis_utils
 
+"""
+@Module: Visualization 
+@Description: 
+@Author: Bob
+"""
 
 class Routines(RoutineSet):
 
@@ -16,54 +18,45 @@ class Routines(RoutineSet):
         return 'VIZ_BUNDLE'
 
     def Visualization(self, state, *args):
-        in_ls: PopList = args[0]
-        vis = Viz()
-        vis.create_window()
-        vis.get_render_option().point_size = 1.0
-        vis.get_render_option().background_color = np.zeros(3)
-        pts = open3d.geometry.PointCloud()
-        x = 0
-        e = Event()
-        while not in_ls.full(x):
-            frame = in_ls.get(x, e)
-            data_dict = frame["points"]
-            pred_dicts = frame["predictions"]
-
-            draw_scenes(vis, pts, points=data_dict['points'][:, 1:], ref_boxes=pred_dicts['pred_boxes'],
-                        ref_scores=pred_dicts['pred_scores'],
-                        ref_labels=pred_dicts['pred_labels'])
-            x += 1
-
-
-def draw_scenes(vis: Viz, pts, points, gt_boxes=None, ref_boxes=None, ref_labels=None, ref_scores=None,
-                point_colors=None,
-                draw_origin=True):
-    # removed from tensor to cpu
-
-    vis.clear_geometries()
-
-
-
-    vis.add_geometry(pts)
-    if point_colors is None:
-        pts.colors = open3d.utility.Vector3dVector(np.ones((points.shape[0], 3)))
-    else:
-        pts.colors = open3d.utility.Vector3dVector(point_colors)
-
-    if gt_boxes is not None:
-        vis = draw_box(vis, gt_boxes, (0, 0, 1))
-
-    if ref_boxes is not None:
-        vis = draw_box(vis, ref_boxes, (0, 1, 0), ref_labels, ref_scores)
-
-    pts.points = open3d.utility.Vector3dVector(points[:, :3])
-
-    vis.update_geometry(pts)
-    vis.poll_events()
-    vis.update_renderer()
-
+        visualizer = Visualizer(args[0])
+        visualizer.start_visualization()
 
 class Visualizer:
+    running: bool
+    frame: int = 0
+    input: PopList
+    window: vis_utils.VisUtils
 
-    def __init__(self):
-        pass
+    def __init__(self, in_ls: PopList):
+        self.input = in_ls
+
+    def start_visualization(self):
+        self.running = True
+        self.visualize()
+
+    def stop_visualization(self):
+        self.running = False
+
+    def visualize(self):
+        while self.running and not self.input.full(self.frame):
+            self.wait_for_data()
+            self.draw_frame()
+            self.frame += 1
+
+    def wait_for_data(self):
+        while len(self.input) <= self.frame:
+            sleep(0.01)
+
+    def draw_frame(self):
+        if self.frame == 0:
+            self.window = vis_utils.VisUtils()
+
+        points = self.input[self.frame]['points']
+        predictions = self.input[self.frame]['predictions']
+        self.window.draw_scenes(
+            points=np.asarray(points),
+            ref_boxes=np.asarray(predictions['ref_boxes']),
+            ref_scores=np.asarray(predictions['ref_scores']),
+            ref_labels=np.asarray(predictions['ref_labels'])
+        )
+

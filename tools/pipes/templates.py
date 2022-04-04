@@ -68,7 +68,7 @@ class RoutineSet(object):
                 while not args[ls].full(args[st][ix]):
                     fnc(*args)
                     args[st][ix] += 1
-                args[ls].set_full(True)
+                args[ls + 1].set_full(True)
 
             return f
 
