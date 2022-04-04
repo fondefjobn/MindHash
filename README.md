@@ -21,7 +21,10 @@
 `pip3 install torch==1.11.0+cu113 torchvision==0.12.0+cu113 torchaudio==0.11.0+cu113 -f https://download.pytorch.org/whl/cu113/torch_stable.html`
 
 **OpenPCDet**
+- To use the machine learning evaluation tools users require installing OpenPCDet framework inside the project root folder named
+`OpenPCDet` (folder structure e.g. `Mindhash/OpenPCDet/pcdet/...`)
 - follow installation guide in OpenPCDet (ignore spconv & open3d requirements - right version are specified in root `requirements.txt`) 
+- copy files inside `Mindhash/_pcdet_files` to `Mindhash/OpenPCDet/tools/` 
 
 **Models**
 - pre-trained models can be downloaded by referring to OpenPCDet/README.md (Model Zoo)

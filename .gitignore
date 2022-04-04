@@ -13,7 +13,7 @@ __pycache__/
 
 # Checkpoint models
 *.pth
-
+OpenPCDet/*
 # Distribution / packaging
 .Python
 build/
