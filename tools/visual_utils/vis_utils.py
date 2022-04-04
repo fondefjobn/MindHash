@@ -26,17 +26,13 @@ class VisUtils:
 
     def __init__(self):
         self.vis = open3d.visualization.Visualizer()
-        self.vis.create_window()
+        self.get_camera_cfg()
+        self.vis.create_window(width=self.camera.intrinsic.width, height=self.camera.intrinsic.height)
         self.vis.get_render_option().point_size = 1.0
         self.vis.get_render_option().background_color = np.zeros(3)
-        self.get_camera_cfg()
 
     def get_camera_cfg(self):
         self.camera = open3d.io.read_pinhole_camera_parameters(CONFIG)
-
-        view_control = self.vis.get_view_control()
-        temp_camera = view_control.convert_to_pinhole_camera_parameters()
-        self.camera.intrinsic = temp_camera.intrinsic
 
     def get_coor_colors(self, obj_labels):
         """
@@ -57,7 +53,7 @@ class VisUtils:
 
     def reset_view(self):
         view_control = self.vis.get_view_control()
-        view_control.convert_from_pinhole_camera_parameters(self.camera)
+        view_control.convert_from_pinhole_camera_parameters(self.camera, allow_arbitrary=True)
 
     def draw_scenes(self, points, gt_boxes=None, ref_boxes=None, ref_labels=None, ref_scores=None, point_colors=None):
         vis = self.vis
