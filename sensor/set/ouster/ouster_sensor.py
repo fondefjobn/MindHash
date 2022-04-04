@@ -6,6 +6,7 @@ from contextlib import closing
 from queue import Queue, Full
 from typing import List
 
+import numpy as np
 from easydict import EasyDict
 from ouster import client, pcap
 from ouster.client import LidarPacket
@@ -61,9 +62,9 @@ class _IO_(Sensor):
         self.config.udp_dest = udp_dest
         self.config.operating_mode = client.OperatingMode.OPERATING_NORMAL
         self.config.lidar_mode = client.LidarMode.MODE_2048x10
-       #  client.set_config(self.host, self.config)
         self.__set_paths__()
-     #   self.__fetch_meta__()
+        #  client.set_config(self.host, self.config) Requires testing with live sensor
+        #   self.__fetch_meta__()
 
     def __set_paths__(self, sep='/'):
         pcap_p = self.PCAP
@@ -106,7 +107,7 @@ class _IO_(Sensor):
             xyzlut = client.XYZLut(self.metadata)
             pls: PopList = self.output
             for scan in stream:
-                m = Cloud3dUtils.get_matrix_cloud(xyzlut, scan, Ch.channel_arr)
+                m = self.get_matrix_cloud(xyzlut, scan, Ch.channel_arr)
                 print('Sampled frame')
                 pls.add(m)
                 time.sleep(self.config['sample_rate'])
@@ -114,6 +115,7 @@ class _IO_(Sensor):
     def convert(self):
         with open(self.META) as f:
             metadata = client.SensorInfo(f.read())
+            self.METADATA = metadata
             source = pcap.Pcap(self.PCAP, metadata)
             self.ouster_pcap_to_mxc(source, metadata, frame_ls=self.output, N=100)
 
@@ -130,8 +132,26 @@ class _IO_(Sensor):
         if N:
             scans = islice(scans, N)
         for idx, scan in enumerate(scans):
-            frame_ls.add(Cloud3dUtils.get_matrix_cloud(xyzlut, scan, Ch.channel_arr))
+            frame_ls.add(self.get_matrix_cloud(xyzlut, scan, Ch.channel_arr))
         return frame_ls
+
+    def get_matrix_cloud(self, xyzlut: client.XYZLut, scan, channel_arr: List[str]) -> MatrixCloud:
+        """"Create separate XYZ point-clouds for separate channels.
+            Reading from cloud is done through dict destructuring.
+            For keys use the client.ChanFields RANGE | SIGNAL | NEAR_IR | REFLECTIVITY"""
+        matrix_cloud = MatrixCloud()
+        field_names = channel_arr
+
+        # use integer mm to avoid loss of precision casting timestamps
+        xyz = (xyzlut(scan.field(client.ChanField.RANGE))).astype(float)
+        xyz = client.destagger(self.METADATA, xyz)
+
+        for ix, ch in enumerate(scan.fields):
+            f = scan.field(ch)
+            matrix_cloud.channels[field_names[ix]] = f
+        x, y, z = [c.flatten() for c in np.dsplit(xyz, 3)]
+        matrix_cloud.clouds[Ch.XYZ] = [x, y, z]
+        return matrix_cloud
 
 
 default_sens_config = 'sensor/config.yaml'

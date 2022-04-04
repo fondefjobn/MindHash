@@ -1,22 +1,16 @@
-import argparse
 import json
-import sys
 from pathlib import Path
 from threading import Event
-from time import sleep
 
-import numpy as np
-import open3d
 import torch
-from open3d.cpu.pybind.visualization import Visualizer
 
-from OpenPCDet.tools.visual_utils.open3d_vis_utils import draw_box
 from OpenPCDet.pcdet.config import cfg, cfg_from_yaml_file
 from pcdet.datasets import DatasetTemplate
 from pcdet.models import build_network, load_data_to_gpu
 from pcdet.utils import common_utils
 from tools.pipes.templates import State, RoutineSet
 from tools.structs.custom_structs import PopList
+from utilities.utils import ArrayUtils
 
 """
 @Module: Ouster Sensor 
@@ -33,7 +27,7 @@ ds_cfgs = {
     'PVRCNN': "cfgs/kitti_models/pv_rcnn.yaml"
 }
 
-obj_labels = {
+labels = {
     1: 'Car',
     2: 'Pedestrian',
     3: 'Cyclist'
@@ -46,7 +40,8 @@ class Routines(RoutineSet):
     def id(self):
         return 'EVAL_BUNDLE'
 
-    def Evaluate(self, state: State, *args):
+    def evaluate(self, state: State, *args):
+        state['labels'] = labels
         output_ls: PopList = args[1]
         logger = common_utils.create_logger()
         config = str((base_path / ds_cfgs[state.args.ml]).resolve())
@@ -73,12 +68,9 @@ class Routines(RoutineSet):
                 output_ls.add(o)
                 x += 1
         output_ls.set_full(True)
-        if any("predictions" in o for o in state.args.export):  # } move this to export local
-            with open('../resources/output/json/out.json', 'w+') as f:
-                pass  # json.dump(output_ls, f)
 
 
-# [obj_labels[ix] for ix in pred_dicts[0]['pred_labels'].cpu().numpy()]
+#
 
 class EvalDataset(DatasetTemplate):
     def __init__(self, dataset_cfg, class_names, training=True, root_path=None, logger=None, ext='.npy', frames=None):

@@ -78,8 +78,6 @@ class RoutineSet(object):
     def full(cls, fnc):
         def f(*args):
             ls: PopList = fnc(*args)
-            print(ls, 'setting true')
-
             ls.set_full(True)
 
         return f

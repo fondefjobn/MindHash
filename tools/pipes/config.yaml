@@ -19,21 +19,21 @@ PIPELINES:
           BUNDLE: PROCESS_BUNDLE
           MT: True
       CONSUMER:
-        - ID: Evaluate
+        - ID: evaluate
           BUNDLE: EVAL_BUNDLE
-          MT: True
-        - ID: ExportLocal
-          BUNDLE: UTILS_BUNDLE
           MT: True
       IO: to_pcdet
     - ID: PREDICTIONS
       PRODUCER:
-        - ID: Evaluate
+        - ID: evaluate
           BUNDLE: EVAL_BUNDLE
           MT: True
       CONSUMER:
         - ID: Visualization
           BUNDLE: VIZ_BUNDLE
+          MT: True
+        - ID: ExportLocal
+          BUNDLE: UTILS_BUNDLE
           MT: True
         - ID: Statistics
           BUNDLE: STAT_BUNDLE

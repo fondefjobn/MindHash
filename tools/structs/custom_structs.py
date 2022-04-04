@@ -52,7 +52,7 @@ class PopList(List):
         self.append(__object)
         self._notify_all()
 
-    def get(self, ix: int, event: Event = None) -> _T:
+    def get(self, ix: int, event: Event) -> _T:
         """
         Appends threads Event object to waiting list if reached list end
 
@@ -72,7 +72,6 @@ class PopList(List):
             self._event_ls_.remove(event)
         return self[ix]
 
-    @synchronized
     def full(self, i: int):
         """
         Checks if list is still updated
@@ -82,7 +81,15 @@ class PopList(List):
         """
         return i >= len(self) and self._full_
 
-    @synchronized
+    def is_full(self):
+        """
+        Checks if list is still updated
+        Returns
+        -------
+    `   True - if list updating session finished
+        """
+        return self._full_
+
     def set_full(self, b: bool = True):
         """
         Set full property

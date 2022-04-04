@@ -1,7 +1,9 @@
+import json
 from threading import Event
+from time import sleep
 
 from tools.pipes import RoutineSet, State
-from utilities.utils import FileUtils, def_numpy
+from utilities.utils import FileUtils, def_numpy, ArrayUtils
 
 
 class Routines(RoutineSet):
@@ -19,16 +21,38 @@ class Routines(RoutineSet):
 
          Requires: None
          """
-        if any("clouds_npy" in o for o in state.args.export):
-            Routines.logging.info(msg='Export:STARTED')
-            x = 0
-            e = Event()
-            in_ls = args[0]
+        self.log.info(msg='Export:STARTED')
 
-            FileUtils.Dir.mkdir_here(def_numpy)
-            while not in_ls.full(x):
-                out = in_ls.get(x, e)
-                FileUtils.Output.to_numpy(out, def_numpy, str(x))
-                x += 1
-            Routines.logging.info(msg='Export: done')
+        in_ls = args[0]
+        FileUtils.Dir.mkdir_here(def_numpy)
+        while not in_ls.is_full():
+            sleep(5)
 
+        for arg in state.args.export:
+            ls:list
+            if isinstance(in_ls[0][arg], dict):
+                ls = self.read_dict(in_ls, arg)
+            else:
+                ls = self.read_list(in_ls, arg)
+            with open('../resources/output/json/' + f'{arg}.json', 'w+') as x:
+                json.dump(ls, x)
+            # FileUtils.Output.to_numpy(out, def_numpy, str(x))
+        self.log.info(msg='Export: done')
+
+    def read_dict(self, in_ls, arg):
+        x = 0
+        ls = []
+        while not in_ls.full(x):
+            in_ls[x][arg] = ArrayUtils.np_dict_to_list(in_ls[x][arg])
+            ls.append({arg: in_ls[x][arg]})
+            x += 1
+        return ls
+
+    def read_list(self, in_ls, arg):
+        x = 0
+        ls = []
+        while not in_ls.full(x):
+            in_ls[x][arg] = in_ls[x][arg].tolist()
+            ls.append({arg: in_ls[x][arg]})
+            x += 1
+        return ls

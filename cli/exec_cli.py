@@ -1,7 +1,7 @@
 import argparse
 from typing import Dict, Any
 
-from tools.pipes import build_pipeline, execute_pipeline, State
+from tools.pipes import PipelineDaemon, State
 from tools.pipes.bundle_list import __generate_list__
 """
 @Module: CLI
@@ -34,7 +34,7 @@ def parse_config():
     parser.add_argument('--meta', type=str, default=None, help='JSON metadata file for input file')
     parser.add_argument('-v', "--verbose", help='Verbose output', action="store_true")
     parser.add_argument('--visual', help='Visualize results with Open3D', action="store_true")
-    parser.add_argument('--export', nargs='+', choices=['predictions', 'clouds_npy'], help='Save results locally')
+    parser.add_argument('--export', nargs='+', choices=['predictions', 'points'], help='Save results locally')
     parser.add_argument('--stats', help='Generate statistic', action="store_true")
     args = parser.parse_args()
     return args
@@ -42,5 +42,6 @@ def parse_config():
 
 if __name__ == '__main__':
     args = parse_config()
-    pipeline = build_pipeline(state=State(args), bundles=__generate_list__(args))
-    execute_pipeline(pipeline)
+    pd = PipelineDaemon()
+    pd.build_pipeline(state=State(args), bundles=__generate_list__(args))
+    pd.execute_pipeline()

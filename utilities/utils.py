@@ -1,16 +1,15 @@
 import logging
 import os
-from argparse import Namespace
-from threading import Event
 from typing import List, TypeVar, Dict
-from easydict import EasyDict as edict
+
 import numpy as np
 import yaml
-from ouster import client, pcap
+from easydict import EasyDict as edict
 from ouster import client as cl
 from yaml import SafeLoader
 
-from tools.structs.custom_structs import PopList, Ch, MatrixCloud
+from tools.structs.custom_structs import Ch, MatrixCloud
+
 """
 @Module: Utilities
 @Description: Provides general utility functions
@@ -140,24 +139,6 @@ class FileUtils:
 class Cloud3dUtils:
 
     @staticmethod
-    def get_matrix_cloud(xyzlut: cl.XYZLut, scan, channel_arr: List[str]) -> MatrixCloud:
-        """"Create separate XYZ point-clouds for separate channels.
-            Reading from cloud is done through dict destructuring.
-            For keys use the client.ChanFields RANGE | SIGNAL | NEAR_IR | REFLECTIVITY"""
-        matrix_cloud = MatrixCloud()
-        field_names = channel_arr
-
-        # use integer mm to avoid loss of precision casting timestamps
-        xyz = (xyzlut(scan.field(cl.ChanField.RANGE))).astype(float)
-
-        for ix, ch in enumerate(scan.fields):
-            f = scan.field(ch)
-            matrix_cloud.channels[field_names[ix]] = f
-        x, y, z = [c.flatten() for c in np.dsplit(xyz, 3)]
-        matrix_cloud.clouds[Ch.XYZ] = [x, y, z]
-        return matrix_cloud
-
-    @staticmethod
     def to_pcdet(matrix_cloud: MatrixCloud):
         # only store return signal intensity
         # field_vals = matrix_cloud.channels[Ch.SIGNAL]
@@ -167,9 +148,6 @@ class Cloud3dUtils:
         y = matrix_cloud.clouds[Ch.XYZ][1]
         z = matrix_cloud.clouds[Ch.XYZ][2]
         frame = np.column_stack((x, y, z, np.zeros(x.shape[0], dtype=float)))
-        # frame = client.destagger(metadata, frame)  # verify de-stagger
-        # frame.reshape(-1, frame.shape[2])  # verify change
-        # print(frame.shape)
         return frame
 
 
@@ -180,12 +158,19 @@ class ArrayUtils:
         """Normalize array values to [0,1]"""
         return (data - np.min(data)) / (np.max(data) - np.min(data))
 
+    @staticmethod
+    def np_dict_to_list(data: dict):
+        """
+        Convert dict of numpy arrays to dict of primitive lists
+        with dictionary comprehension
+        ----------
+        data
 
+        Returns
+        -------
 
-
-
-
-
+        """
+        return {key: arr.tolist() for (key, arr) in data.items()}
 
 
 parserMap = {
