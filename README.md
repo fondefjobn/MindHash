@@ -1,3 +1,4 @@
+
 # MindHash
 @Authors: Radu Rebeja, Nevis King
 
@@ -9,9 +10,9 @@
 
 **Virtual Environment:**
 - use *venv*
-- add `export PYTHONPATH="${PYTHONPATH}:{/absolute/path/to/project/Mindhash}"` to `venv/bin/activate` script \
-- source `venv/bin/activate`
-- run in terminal `pip install -r requirements.txt`
+- add `export PYTHONPATH="${PYTHONPATH}:{/absolute/path/to/project/Mindhash}"` to `venv/bin/activate` script
+- run `source venv/bin/activate`
+- run `pip install -r requirements.txt`
 
 **CUDA**:
 - install cuda-toolkit 11.6 & `export CUDA_HOME=/usr/local/cuda` or `/path/to/your/cuda` (folder from root dir)
@@ -21,7 +22,10 @@
 `pip3 install torch==1.11.0+cu113 torchvision==0.12.0+cu113 torchaudio==0.11.0+cu113 -f https://download.pytorch.org/whl/cu113/torch_stable.html`
 
 **OpenPCDet**
-- follow installation guide in OpenPCDet (ignore spconv & open3d requirements - right version are specified in root `requirements.txt`) 
+- To use the machine learning evaluation tools users require installing OpenPCDet framework inside the project root folder named
+`OpenPCDet` (e.g. folder structure  `Mindhash-main/OpenPCDet/pcdet/...`)
+- Use the README.md for introduction
+- follow installation guide in OpenPCDet in `OpenPCDet/docs/INSTALL.md` (ignore spconv & open3d requirements - right version are specified in root `requirements.txt`)
 
 **Models**
 - pre-trained models can be downloaded by referring to OpenPCDet/README.md (Model Zoo)
@@ -49,7 +53,4 @@ the ArgumentParser documentation
 | streamproccessor       | Provides functionalities for data filtering and augmentation tasks                                                        |
 | tools                  | Pipeline and utilities                                                                                                    |
 | visualizer             | Visualizer for lidar data as well as the bounding boxes produced by the models                                            |
-
-
-
 
