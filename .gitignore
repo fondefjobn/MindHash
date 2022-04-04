@@ -10,11 +10,9 @@ __pycache__/
 # PCAP files
 *.pcap
 
-*.json
 
 # Checkpoint models
 *.pth
-OpenPCDet/*
 # Distribution / packaging
 .Python
 build/
