@@ -1,4 +1,0 @@
-name: io_env
-dependencies:
-  - pip:
-      - ouster-sdk[examples]

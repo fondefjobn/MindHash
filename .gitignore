@@ -6,14 +6,6 @@ __pycache__/
 # C extensions
 *.so
 
-# PCAP files
-*.pcap
-
-*.json
-
-# Checkpoint models
-*.pth
-
 # Distribution / packaging
 .Python
 build/
