@@ -9,9 +9,9 @@
 
 **Virtual Environment:**
 - use *venv*
-- add `export PYTHONPATH="${PYTHONPATH}:{/absolute/path/to/project/Mindhash}"` to `venv/bin/activate` script \
-- source `venv/bin/activate`
-- run in terminal `pip install -r requirements.txt`
+- add `export PYTHONPATH="${PYTHONPATH}:{/absolute/path/to/project/Mindhash}"` to `venv/bin/activate` script
+- run `source venv/bin/activate`
+- run `pip install -r requirements.txt`
 
 **CUDA**:
 - install cuda-toolkit 11.6 & `export CUDA_HOME=/usr/local/cuda` or `/path/to/your/cuda` (folder from root dir)
@@ -22,9 +22,9 @@
 
 **OpenPCDet**
 - To use the machine learning evaluation tools users require installing OpenPCDet framework inside the project root folder named
-`OpenPCDet` (folder structure e.g. `Mindhash/OpenPCDet/pcdet/...`)
+`OpenPCDet` (**CASE SENSITIVE!**) (e.g. folder structure  `Mindhash-main/OpenPCDet/pcdet/...`)
 - follow installation guide in OpenPCDet (ignore spconv & open3d requirements - right version are specified in root `requirements.txt`) 
-- copy files inside `Mindhash/_pcdet_files` to `Mindhash/OpenPCDet/tools/` 
+- copy files inside `Mindhash-main/_pcdet_files` to `Mindhash-main/OpenPCDet/tools/` 
 
 **Models**
 - pre-trained models can be downloaded by referring to OpenPCDet/README.md (Model Zoo)
