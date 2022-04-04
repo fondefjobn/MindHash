@@ -22,9 +22,9 @@
 
 **OpenPCDet**
 - To use the machine learning evaluation tools users require installing OpenPCDet framework inside the project root folder named
-`OpenPCDet` (**CASE SENSITIVE!**) (e.g. folder structure  `Mindhash-main/OpenPCDet/pcdet/...`)
-- follow installation guide in OpenPCDet (ignore spconv & open3d requirements - right version are specified in root `requirements.txt`) 
-- copy files inside `Mindhash-main/_pcdet_files` to `Mindhash-main/OpenPCDet/tools/` 
+`OpenPCDet` (e.g. folder structure  `Mindhash-main/OpenPCDet/pcdet/...`)
+- Use the README.md for introduction
+- follow installation guide in OpenPCDet in `OpenPCDet/docs/INSTALL.md` (ignore spconv & open3d requirements - right version are specified in root `requirements.txt`)
 
 **Models**
 - pre-trained models can be downloaded by referring to OpenPCDet/README.md (Model Zoo)
