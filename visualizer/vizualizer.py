@@ -1,3 +1,4 @@
+from threading import Event
 from time import sleep
 
 import numpy as np
@@ -25,9 +26,10 @@ class Routines(RoutineSet):
 
 class Visualizer:
     running: bool
-    frame: int = 0
+    ix: int = 0
     input: PopList
     window: vis_utils.VisUtils
+    event: Event = Event()
 
     def __init__(self, in_ls: PopList):
         self.input = in_ls
@@ -40,22 +42,16 @@ class Visualizer:
         self.running = False
 
     def visualize(self):
-        while self.running and not self.input.full(self.frame):
-            self.wait_for_data()
+        self.window = vis_utils.VisUtils()
+        while self.running and not self.input.full(self.ix):
             self.draw_frame()
-            self.frame += 1
+            self.ix += 1
         self.running = False
 
-    def wait_for_data(self):
-        while len(self.input) <= self.frame:
-            sleep(0.01)
-
     def draw_frame(self):
-        if self.frame == 0:
-            self.window = vis_utils.VisUtils()
-
-        points = self.input[self.frame]['points']
-        predictions = self.input[self.frame]['predictions']
+        frame = self.input.get(self.ix, self.event)
+        points = frame['points']
+        predictions = frame['predictions']
         self.window.draw_scenes(
             points=np.asarray(points),
             ref_boxes=np.asarray(predictions['ref_boxes']),
