@@ -54,4 +54,3 @@ the ArgumentParser documentation
 | tools                  | Pipeline and utilities                                                                                                    |
 | visualizer             | Visualizer for lidar data as well as the bounding boxes produced by the models                                            |
 
-
