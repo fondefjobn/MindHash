@@ -34,6 +34,10 @@ class VisUtils:
     def get_camera_cfg(self):
         self.camera = open3d.io.read_pinhole_camera_parameters(CONFIG)
 
+        view_control = self.vis.get_view_control()
+        temp_camera = view_control.convert_to_pinhole_camera_parameters()
+        self.camera.intrinsic = temp_camera.intrinsic
+
     def get_coor_colors(self, obj_labels):
         """
         Args:

@@ -12,6 +12,7 @@ from tools.visual_utils import vis_utils
 @Author: Bob
 """
 
+
 class Routines(RoutineSet):
 
     def id(self):
@@ -20,6 +21,7 @@ class Routines(RoutineSet):
     def Visualization(self, state, *args):
         visualizer = Visualizer(args[0])
         visualizer.start_visualization()
+
 
 class Visualizer:
     running: bool
@@ -42,6 +44,7 @@ class Visualizer:
             self.wait_for_data()
             self.draw_frame()
             self.frame += 1
+        self.running = False
 
     def wait_for_data(self):
         while len(self.input) <= self.frame:
@@ -59,4 +62,3 @@ class Visualizer:
             ref_scores=np.asarray(predictions['ref_scores']),
             ref_labels=np.asarray(predictions['ref_labels'])
         )
-
