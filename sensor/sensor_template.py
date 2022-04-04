@@ -27,8 +27,8 @@ class Sensor(ABC):
     @abstractmethod
     def convert(self):
         """
-           Function for any post-processing readings
-           Returns
+           Convert sensor output files from sensor native format to MatrixCloud
+           for post-processing
            -------
 
            """

@@ -1,3 +1,4 @@
+#Config for pipelines.py
 PIPELINES:
   DISABLE_RT_LIST: [ 'placeholder' ]
   POPLIST:

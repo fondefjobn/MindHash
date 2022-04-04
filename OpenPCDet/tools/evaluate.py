@@ -24,7 +24,11 @@ OPEN3D_FLAG = True
 base_path = Path(__file__).parent
 file_path = "../OpenPCDet/tools/"
 ds_cfgs = {
-    'PVRCNN': "cfgs/kitti_models/pv_rcnn.yaml"
+    'PVRCNN': "cfgs/kitti_models/pv_rcnn.yaml",
+    'POINTRCNN': "cfgs/kitti_models/pointrcnn.yaml",
+    'POINTPILLAR': "cfgs/kitti_models/pointpillar_pyramid_aug.yaml",
+    'PARTA2': "cfgs/kitti_models/PartA2_free.yaml"
+
 }
 
 labels = {

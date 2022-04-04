@@ -4,7 +4,11 @@ from time import sleep
 
 from tools.pipes import RoutineSet, State
 from utilities.utils import FileUtils, def_numpy, ArrayUtils
-
+"""
+@Module: ExportModule
+@Description: Export point, predictions , statistics etc.
+@Author: Radu Rebeja
+"""
 
 class Routines(RoutineSet):
 
@@ -14,12 +18,9 @@ class Routines(RoutineSet):
     def ExportLocal(self, state: State, *args):
         """
          Routine: Export conversion results
-
          Produces: None
+         Consumes: evaluate
 
-         Consumes: PcapList
-
-         Requires: None
          """
         self.log.info(msg='Export:STARTED')
 
@@ -36,7 +37,6 @@ class Routines(RoutineSet):
                 ls = self.read_list(in_ls, arg)
             with open('../resources/output/json/' + f'{arg}.json', 'w+') as x:
                 json.dump(ls, x)
-            # FileUtils.Output.to_numpy(out, def_numpy, str(x))
         self.log.info(msg='Export: done')
 
     def read_dict(self, in_ls, arg):

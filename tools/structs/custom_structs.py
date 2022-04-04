@@ -1,10 +1,5 @@
-import dataclasses
-import threading
-from typing import List, Optional, Union, Tuple, TypeVar, Set
 from threading import Event
-
-from numpy import iterable
-from wrapt import synchronized
+from typing import List, Optional, Union, Tuple, TypeVar, Set
 
 """
 @Module: Custom Data Structures
@@ -22,8 +17,6 @@ class PopList(List):
     Lock is created within PopList
     For more details on Condition, Locks and Threads see:
     https://docs.python.org/3.8/library/threading.html#using-locks-conditions-and-semaphores-in-the-with-statement
-
-    Note: Not yet tested
     """
     _full_: bool
     _event_ls_: Set[Event]

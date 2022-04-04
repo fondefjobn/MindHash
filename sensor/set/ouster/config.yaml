@@ -8,3 +8,4 @@ SAMPLE_RATE: 0 # delay
 LIST_SIZE: -1 #inf
 META_PATH: /metadata # output from live metadata fetching
 PCAP_PATH: /pcap # for recordings
+N: # number of samples read

@@ -9,9 +9,7 @@ from tools.pipes.bundle_list import __generate_list__
 @Author: Radu Rebeja
 """
 """Project CLI
-We will use for debugging and initial usage a simple argparser,
-after MVP completion:
-*interactive 
+First interface a simple ArgumentParser
 """
 
 
@@ -19,14 +17,15 @@ def parse_config():
     parser = argparse.ArgumentParser(description='StreetAnalytics Project CLI')
     parser.add_argument('--sensor', default=None,
                         help='Sensor defining input type', choices=['ouster'], type=str.lower, required=True)
-    parser.add_argument('--N', type=int, default=None, help='Limit number N of processed frames')
+    parser.add_argument('--n', type=int, default=None, help='Limit number N of processed frames')
     parser.add_argument('--live',
                         help='Live-stream processing mode', action="store_true")
     parser.add_argument('--eval',
                         help='Evaluate input with a ML Model', action="store_true")
     parser.add_argument('--host', type=str, default=None, help='Sensor hostname')
     parser.add_argument('--port', type=int, default=None, help='Sensor port')
-    parser.add_argument('--ml', type=str.upper, default='PVRCNN', choices=['PVRCNN'],
+    parser.add_argument('--ml', type=str.upper, default='PVRCNN', choices=['PVRCNN', 'POINTRCNN', 'POINTPILLAR',
+                                                                           'PARTA2'],
                         help='Model name')
     parser.add_argument('--mlpath', type=str, default=None, help='Model path from content root')
     parser.add_argument('--input', type=str, default=None, help='PCAP/other file for post-processing')

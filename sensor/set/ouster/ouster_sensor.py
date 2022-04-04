@@ -1,7 +1,5 @@
-import json
-from argparse import Namespace
-from threading import Thread, Event
 import time
+from argparse import Namespace
 from contextlib import closing
 from queue import Queue, Full
 from typing import List
@@ -13,8 +11,8 @@ from ouster.client import LidarPacket
 from requests import get
 
 from sensor.sensor_template import Sensor
-from utilities.utils import FileUtils, Cloud3dUtils
 from tools.structs.custom_structs import Ch, MatrixCloud, PopList
+from utilities.utils import FileUtils
 
 default_pcap: str = '/pcap'
 default_metadata: str = '/metadata'
@@ -22,6 +20,11 @@ CONFIG: str = '../sensor/set/ouster/config.yaml'
 """
 @Module: Ouster Sensor 
 @Description: Tools for livestreaming from an Ouster Sensor
+This module uses functionalities from Ouster-SDK python library to 
+operate with an Ouster Sensor
+Tasks:
+-Reading sensor output files in post-processing (tested)
+-Reading live from a sensor (not tested)
 @Author: Radu Rebeja
 """
 
@@ -52,6 +55,7 @@ class _IO_(Sensor):
         self.udp_port = params.LIDAR_PORT if args.port is None else args.port
         self.PCAP = params.PCAP if args.input is None else args.input
         self.META = params.META if args.meta is None else args.meta
+        self.N = params.N if args.n is None else args.n
         self.config = client.SensorConfig()
         self.config.udp_port_lidar = params.LIDAR_PORT
         self.config.udp_port_imu = params.IMU_PORT
@@ -85,7 +89,7 @@ class _IO_(Sensor):
 
     def __get_source__(self):
         with open(self.meta_file, 'r') as f:
-            self.metadata = client.SensorInfo(f.read())
+            self.SENSOR_INFO = client.SensorInfo(f.read())
 
     def stream_packets(self, q: Queue):
         """Only LiDAR data! Read stream from pcap file. Less latency. More packet access.
@@ -100,11 +104,11 @@ class _IO_(Sensor):
     def read(self):
         """
         Read SDK-controlled stream of lidar data. More latency.
-         Incomplete & late frames are dropped from stream internally.
-         """
+        Incomplete & late frames are dropped from stream internally.
+        """
         with closing(client.Scans.stream(self.host, self.config.udp_port_lidar,
                                          complete=False)) as stream:
-            xyzlut = client.XYZLut(self.metadata)
+            xyzlut = client.XYZLut(self.SENSOR_INFO)
             pls: PopList = self.output
             for scan in stream:
                 m = self.get_matrix_cloud(xyzlut, scan, Ch.channel_arr)
@@ -113,17 +117,22 @@ class _IO_(Sensor):
                 time.sleep(self.config['sample_rate'])
 
     def convert(self):
+        """
+        Convert sensor output files from sensor native format to MatrixCloud
+        for post-processing
+        Returns
+        -------
+
+        """
         with open(self.META) as f:
             metadata = client.SensorInfo(f.read())
             self.METADATA = metadata
             source = pcap.Pcap(self.PCAP, metadata)
-            self.ouster_pcap_to_mxc(source, metadata, frame_ls=self.output, N=100)
+            self.ouster_pcap_to_mxc(source, metadata, frame_ls=self.output, N=self.N)
 
     def ouster_pcap_to_mxc(self, source: client.PacketSource, metadata: client.SensorInfo, frame_ls: PopList,
                            N: int = 1,
                            ) -> List[MatrixCloud]:
-        # [doc-stag-pcap-to-csv]
-
         from itertools import islice
         # precompute xyzlut to save computation in a loop
         xyzlut = client.XYZLut(metadata)
@@ -142,8 +151,9 @@ class _IO_(Sensor):
         matrix_cloud = MatrixCloud()
         field_names = channel_arr
 
-        # use integer mm to avoid loss of precision casting timestamps
+        #   use integer mm to avoid loss of precision casting timestamps
         xyz = (xyzlut(scan.field(client.ChanField.RANGE))).astype(float)
+        #   destagger mode
         xyz = client.destagger(self.METADATA, xyz)
 
         for ix, ch in enumerate(scan.fields):
