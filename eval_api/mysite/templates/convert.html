@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+
+
+    {% block content %} Send .npy file to be converted to json
+<form method="post" action="/convert/" enctype="multipart/form-data">
+    {% csrf_token %}
+    {{form}}
+    <button type="submit", name="send">Get conversion</button>
+</form>
+
+{% endblock content %}
