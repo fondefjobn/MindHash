@@ -1,13 +1,14 @@
-"""
-Open3d visualization tool box
-Largely based on OpenPCDet/tools/visual_utils/open3d_vis_utils
-Added support for moving frames
-@Author: Bob van der Vuurst
-"""
 import open3d
-import torch
 import matplotlib
 import numpy as np
+
+"""
+@Module:VisUtils
+@Description: Open3d visualization tool box largely based on OpenPCDet/tools/visual_utils/open3d_vis_utils,
+but with added support for moving pointclouds.
+@Author: Jihan Yang
+@ModifiedBy: Bob van der Vuurst
+"""
 
 box_colormap = [
     [1, 1, 1],
@@ -51,8 +52,15 @@ class VisUtils:
 
     def reset_view(self):
         view_control = self.vis.get_view_control()
-        view_control.set_lookat([0, 0, 0])
-        view_control.set_constant_z_far(800)
+
+        camera = view_control.convert_to_pinhole_camera_parameters()
+        camera.extrinsic = np.array([
+            [0, -1, 0, 0],
+            [0, 0, -1, 0],
+            [1, 0, 0, 15],
+            [0, 0, 0, 1]
+        ])
+        view_control.convert_from_pinhole_camera_parameters(camera)
 
     def draw_scenes(self, points, gt_boxes=None, ref_boxes=None, ref_labels=None, ref_scores=None, point_colors=None,
                     draw_origin=True):
