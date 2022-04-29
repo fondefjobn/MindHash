@@ -113,7 +113,7 @@ class _IO_(Sensor):
             for scan in stream:
                 m = self.get_matrix_cloud(xyzlut, scan, Ch.channel_arr)
                 print('Sampled frame')
-                pls.add(m)
+                pls.append(m)
                 time.sleep(self.config['sample_rate'])
 
     def convert(self):
@@ -141,7 +141,7 @@ class _IO_(Sensor):
         if N:
             scans = islice(scans, N)
         for idx, scan in enumerate(scans):
-            frame_ls.add(self.get_matrix_cloud(xyzlut, scan, Ch.channel_arr))
+            frame_ls.append(self.get_matrix_cloud(xyzlut, scan, Ch.channel_arr))
         return frame_ls
 
     def get_matrix_cloud(self, xyzlut: client.XYZLut, scan, channel_arr: List[str]) -> MatrixCloud:

@@ -1,13 +1,10 @@
-from argparse import Namespace
 from typing import List, Optional, Union
 
-from ouster import client, pcap
-
-from sensor.sensor_template import Sensor
 from sensor.sensor_set import __all__
-from tools.pipes import State, RoutineSet
-from tools.structs.custom_structs import PopList, MatrixCloud, Ch
-from utilities.utils import FileUtils, Cloud3dUtils
+from sensor.sensor_template import Sensor
+from tools.pipes import RNode
+from tools.structs.custom_structs import PopList
+from utilities.utils import FileUtils
 
 """
 @Module: Sensor Controller
@@ -16,48 +13,14 @@ See Also Architecture document on Pipelines
 @Author: Radu Rebeja
 """
 
-
-class Routines(RoutineSet):
-
-    def id(self):
-        return "SENSOR_BUNDLE"
-
-    channels: List[int] = [1, 2, 3, 4]
-
-    @RoutineSet.full
-    def user_input(self, state: State, *args):
-        """
-        Routine: User Input File post-process
-
-        Produces: UserInput
-        Consumes: User provided input
-        Requires: Pcap path
-        Parameters
-        ----------
-        state
-        args (input_list, output_list)
-
-        Returns
-        -------
-
-        """
-        out_ls: PopList = args[1]
-        sensor: Sensor = __all__[state.args.sensor](state.args, out_ls)
-        if not state.args.live:
-            sensor.convert()
-        else:
-            sensor.read()
-        Routines.log.info(msg='UserInput reading: done')
-        return out_ls
-
-
 default_sens_config = 'sensor/config.yaml'
 default_stream_config = 'sensor/config.yaml'
 
 
 class SensorController(object):
     """SensorController
-    Anything spicy you want to do with your sensor happens here"""
+    Anything spicy you want to do with your sensor happens here
+    e.g. settings """
 
     def __init__(self, config: Optional[Union[dict, str]], sensor: Sensor):
         c_dict: dict
@@ -74,3 +37,42 @@ class SensorController(object):
 
     def connect(self):
         pass
+
+
+class Routines(RNode):
+    """
+    Main Sensor Input
+    """
+    def __init__(self, state):
+        super().__init__(state)
+
+    @RNode.assist
+    def run(self, _input: List[PopList], output: PopList, **kwargs):
+        """
+              Routine: User Input File post-process
+
+              Produces: UserInput
+              Consumes: User provided input
+              Requires: Pcap path
+              Parameters
+              ----------
+              state
+              args (input_list, output_list)
+
+              Returns
+              -------
+
+              """
+        sensor: Sensor = __all__[self.state.args.sensor](self.state.args, output)
+        controller: SensorController = SensorController({}, sensor)
+        if not self.state.args.live:
+            sensor.convert()
+        else:
+            sensor.read()
+        Routines.log.info(msg='UserInput reading: done')
+        return output
+
+    def dependencies(self):
+        return []
+
+    channels: List[int] = [1, 2, 3, 4]

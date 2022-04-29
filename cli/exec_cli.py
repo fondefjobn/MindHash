@@ -1,8 +1,7 @@
 import argparse
-from typing import Dict, Any
 
 from tools.pipes import PipelineDaemon, State
-from tools.pipes.bundle_list import __generate_list__
+
 """
 @Module: CLI
 @Description: Simple CLI with 
@@ -25,7 +24,7 @@ def parse_config():
     parser.add_argument('--host', type=str, default=None, help='Sensor hostname')
     parser.add_argument('--port', type=int, default=None, help='Sensor port')
     parser.add_argument('--ml', type=str.upper, default='PVRCNN', choices=['PVRCNN', 'POINTRCNN', 'POINTPILLAR',
-                                                                           'PARTA2'],
+                                                                           'PARTA2', 'PP_NU'],
                         help='Model name')
     parser.add_argument('--mlpath', type=str, default=None, help='Model path from content root')
     parser.add_argument('--input', type=str, default=None, help='PCAP/other file for post-processing')
@@ -42,5 +41,5 @@ def parse_config():
 if __name__ == '__main__':
     args = parse_config()
     pd = PipelineDaemon()
-    pd.build_pipeline(state=State(args), bundles=__generate_list__(args))
+    pd.build_pipeline(state=State(args))
     pd.execute_pipeline()

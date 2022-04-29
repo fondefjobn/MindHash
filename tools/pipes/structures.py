@@ -1,6 +1,9 @@
 from argparse import Namespace
 from abc import ABC, abstractmethod
 from threading import Event
+from typing import List
+
+from numba import njit, jit
 
 from tools.structs import PopList
 
@@ -39,49 +42,58 @@ class State:
         return self.state[key]
 
 
-class RoutineSet(object):
+class RNode(object):
     """
-    Wrapper class for bundles of routines.
-    ID must be set by any class subclassing RoutineSet
-    and added to pipeline config file accordingly
+    Parent class of routines acting as nodes in pipes.pipeline.PipelineDaemon
+    Dependencies must be set by any class subclassing RNode
     """
     import logging
     logging.basicConfig(format='%(levelname)s:%(message)s', level=logging.INFO)
     log = logging
     lspos = 2  # starting position for pop-list tuple
 
-    def __init__(self):
+    def __init__(self, state):
+        self.state = state
         self.event = Event()
 
     @classmethod
-    def poplist_loop(cls, arg: int, ix: str):
+    def run_loop(cls, i: int, ixid: str):
         """
-        Decorator function
-
+        Decorator function (for debugging only!)
         Additional loop functionality here - list clearing , closing ceremonies"""
 
         def loop(fnc):
-            def f(*args):
-                st = 1
-                ls = 2 + arg
-                args[st][ix] = 0
-                while not args[ls].full(args[st][ix]):
-                    fnc(*args)
-                    args[st][ix] += 1
-                args[ls + 1].set_full(True)
+            @njit
+            def f(*args, **kwargs):
+                kwargs[ixid] = i
+                while not args[1][0].full(kwargs[ixid]):
+                    fnc(*args, **kwargs)
+                    kwargs[ixid] += 1
+                args[2].set_full(True)
 
             return f
 
         return loop
 
     @classmethod
-    def full(cls, fnc):
-        def f(*args):
-            ls: PopList = fnc(*args)
-            ls.set_full(True)
+    def assist(cls, fnc):
+        """
+        For closing processes & logging
+        """
+
+        def f(*args, **kwargs):
+            fnc(*args, **kwargs)
+            args[2].set_full(True)  # verify this
 
         return f
 
     @abstractmethod
-    def id(self):
-        return None
+    def run(self, _input: List[list], output: list, **kwargs):
+        pass
+
+    @abstractmethod
+    def dependencies(self) -> list:
+        return []
+
+    def h_dependencies(self) -> list:
+        return list(map(hash, self.dependencies()))

@@ -31,18 +31,18 @@ class PopList(List):
         self._event_ls_ = set()
         self.__doc__ += doc
 
-    def add(self, __object: _T) -> None:
+    def append(self, __object: _T) -> None:
         """
-        Appends an object to the list end and notifies all threads waiting on list update
-        Parameters
-        ----------
-        __object
+          Appends an object to the list end and notifies all threads waiting on list update
+          Parameters
+          ----------
+          __object
 
-        Returns
-        -------
+          Returns
+          -------
 
-        """
-        self.append(__object)
+          """
+        super().append(__object)
         self._notify_all()
 
     def get(self, ix: int, event: Event) -> _T:

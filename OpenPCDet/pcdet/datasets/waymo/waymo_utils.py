@@ -35,7 +35,7 @@ def generate_labels(frame):
         tracking_difficulty.append(laser_labels[i].tracking_difficulty_level)
         dimensions.append([box.length, box.width, box.height])  # lwh in unified coordinate of OpenPCDet
         locations.append(loc)
-        obj_ids.append(laser_labels[i].id)
+        obj_ids.append(laser_labels[i].inputs)
         num_points_in_gt.append(laser_labels[i].num_lidar_points_in_box)
 
     annotations = {}

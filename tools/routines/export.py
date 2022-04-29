@@ -1,43 +1,49 @@
 import json
 from threading import Event
 from time import sleep
+from typing import List
 
-from tools.pipes import RoutineSet, State
+from tools.pipes import RNode
+from tools.structs import PopList
 from utilities.utils import FileUtils, def_numpy, ArrayUtils
+
 """
 @Module: ExportModule
 @Description: Export point, predictions , statistics etc.
 @Author: Radu Rebeja
 """
 
-class Routines(RoutineSet):
 
-    def id(self):
-        return 'UTILS_BUNDLE'
+class Routines(RNode):
+    """
+    Export routine
+    """
+    def __init__(self, state):
+        super().__init__(state)
 
-    def ExportLocal(self, state: State, *args):
-        """
-         Routine: Export conversion results
-         Produces: None
-         Consumes: evaluate
+    def run(self, _input: List[PopList], output: PopList, **kwargs):
 
-         """
         self.log.info(msg='Export:STARTED')
 
-        in_ls = args[0]
         FileUtils.Dir.mkdir_here(def_numpy)
-        while not in_ls.is_full():
+        while not _input[0].is_full():
             sleep(5)
 
-        for arg in state.args.export:
-            ls:list
-            if isinstance(in_ls[0][arg], dict):
-                ls = self.read_dict(in_ls, arg)
+        for arg in self.state.args.export:
+            ls: list
+            if isinstance(_input[0][arg], dict):
+                ls = self.read_dict(_input[0], arg)
             else:
-                ls = self.read_list(in_ls, arg)
+                ls = self.read_list(_input[0], arg)
             with open('../resources/output/json/' + f'{arg}.json', 'w+') as x:
                 json.dump(ls, x)
         self.log.info(msg='Export: done')
+
+    def dependencies(self):
+        from streamprocessor.stream_process import Routines as processor
+        from statistic.stats import Routines as stats
+        from OpenPCDet.tools.evaluate import Routines as detector
+        return [processor, stats, detector]
 
     def read_dict(self, in_ls, arg):
         x = 0

@@ -101,8 +101,8 @@ class OpenPCDetWaymoDetectionMetricsEstimator(tf.test.TestCase):
         """
 
         for x in range(0, 100):
-            config.score_cutoffs.add(x * 0.01)
-        config.score_cutoffs.add(1.0)
+            config.score_cutoffs.append(x * 0.01)
+        config.score_cutoffs.append(1.0)
 
         text_format.Merge(config_text, config)
         return config
@@ -148,23 +148,10 @@ class OpenPCDetWaymoDetectionMetricsEstimator(tf.test.TestCase):
         ground_truth_type,
         ground_truth_difficulty,
     ):
-        sess.run(
-            [tf.group([value[1] for value in metrics.values()])],
-            feed_dict={
-                self._pd_bbox: prediction_bbox,
-                self._pd_frame_id: prediction_frame_id,
-                self._pd_type: prediction_type,
-                self._pd_score: prediction_score,
-                self._pd_overlap_nlz: prediction_overlap_nlz,
-                self._gt_bbox: ground_truth_bbox,
-                self._gt_type: ground_truth_type,
-                self._gt_frame_id: ground_truth_frame_id,
-                self._gt_difficulty: ground_truth_difficulty,
-            },
-        )
+        sess.run([tf.group([value[1] for value in metrics.values()])], ),
 
     def eval_value_ops(self, sess, graph, metrics):
-        return {item[0]: sess.run([item[1][0]]) for item in metrics.items()}
+        return {item[0]: sess.run([item[1][0]], ), for item in metrics.items()}
 
     def mask_by_distance(self, distance_thresh, boxes_3d, *args):
         mask = np.linalg.norm(boxes_3d[:, 0:2], axis=1) < distance_thresh + 0.5
@@ -205,7 +192,7 @@ class OpenPCDetWaymoDetectionMetricsEstimator(tf.test.TestCase):
         graph = tf.Graph()
         metrics = self.build_graph(graph)
         with self.test_session(graph=graph) as sess:
-            sess.run(tf.compat.v1.initializers.local_variables())
+            sess.run(tf.compat.v1.initializers.local_variables(), ),
             self.run_eval_ops(
                 sess, graph, metrics, pd_frameid, pd_boxes3d, pd_type, pd_score, pd_overlap_nlz,
                 gt_frameid, gt_boxes3d, gt_type, gt_difficulty,
