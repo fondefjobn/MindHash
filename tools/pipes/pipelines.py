@@ -109,12 +109,9 @@ class PipelineDaemon:
         self.update(routines, threads, routines.popitem())
         self.pipeline = [threading.Thread(target=r[_exec], args=(r[inputs], r[output]))
                          for r in threads.values()]
-        print(routines)
-        print(threads)
 
     def update(self, routines: Dict[int, RNode], threads: dict, rt: Tuple[int, RNode], cycles=False):
         p: PopList = PopList()
-        print(routines)
         if rt[0] not in threads:
             threads[rt[0]] = {
                 _exec: rt[1].run,
@@ -131,7 +128,6 @@ class PipelineDaemon:
                 if parent in threads:
                     threads[rt[0]][inputs][ix] = threads[parent][output]
                 else:
-                    print('RECURSION')
                     self.update(routines, threads, rt=(parent, routines.get(parent)), cycles=cycles)
                     threads[rt[0]][inputs][ix] = threads[parent][output]
         if len(routines) != 0:
