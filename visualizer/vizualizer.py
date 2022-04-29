@@ -45,6 +45,7 @@ class Routines(RNode):
         super().__init__(state)
 
     def run(self, _input: List[PopList], output: PopList, **kwargs):
+        print("VIZUAAAAL ")
         visualizer = Visualizer()
         visualizer.enable()
         x = 0
