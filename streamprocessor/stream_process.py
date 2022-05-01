@@ -1,5 +1,5 @@
 from queue import Queue
-from typing import List
+from typing import List, Tuple
 
 from numba import jit
 
@@ -58,6 +58,9 @@ class Routines(RNode):
     """
     StreamProcessor routine
     """
+    @classmethod
+    def script(cls, parser) -> bool:
+        return False
 
     def __init__(self, state):
         super().__init__(state)

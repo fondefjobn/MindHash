@@ -1,6 +1,6 @@
 from pathlib import Path
 from threading import Event
-from typing import List
+from typing import List, Tuple
 
 import torch
 from pcdet.datasets import DatasetTemplate
@@ -73,6 +73,10 @@ class Routines(RNode):
     """
     3D-Detector routine
     """
+    @classmethod
+    def script(cls, parser) -> bool:
+        return False
+
     def_npy = 'MindHash/OpenPCDet/tools/format.npy'
 
     def __init__(self, state):

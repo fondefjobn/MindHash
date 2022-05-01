@@ -4,7 +4,7 @@ from typing import List, Dict, Tuple
 
 from easydict import EasyDict
 
-from tools.pipes.structures import RNode
+from tools.pipes.structures import RNode, State
 from tools.structs import PopList
 from utilities.utils import FileUtils as fu
 
@@ -18,8 +18,6 @@ See Also Architecture document on Pipelines
 
 # Dictionary of string values
 CONFIG: str = '../tools/pipes/config.yaml'
-PRODUCER: str = 'PRODUCER'
-CONSUMER: str = 'CONSUMER'
 inputs: str = 'PRODUCER'
 output: str = 'output'
 _exec: str = 'exec'
@@ -50,41 +48,7 @@ class PipelineDaemon:
         for ix, pl in enumerate(self.pipeline):
             pl.start()
 
-    def update_routines(self, bundles: dict, schema: dict, ls_cfg, role: str, pop_ls: PopList):
-        """
-        v.1
-        Initialize missing routines from the list and update Producers and Consumers
-        for present instances by assigning either an Input or Output list.
-        Parameters
-        ----------
-        pop_ls
-        role
-        schema
-        bundles
-        ls_cfg
-
-        Returns
-        -------
-
-        """
-
-        def update(obj_cfg):
-            if obj_cfg.ID not in schema:
-                if obj_cfg.BUNDLE not in bundles:
-                    return False
-                else:
-                    schema[obj_cfg.ID] = {
-                        _exec: getattr(bundles[obj_cfg.BUNDLE], obj_cfg.ID),
-                        PRODUCER: None,
-                        CONSUMER: None,
-                        _mt: obj_cfg.MT
-                    }
-            schema[obj_cfg.ID][role] = pop_ls
-            return True
-
-        list(map(update, ls_cfg))
-
-    def build_pipeline(self, state):
+    def build_pipeline(self, state: State):
         """
             Builds pipeline by iterating over the list of PopList dict objects in
             the configuration dictionary. Updates at each step the pipeline chain
@@ -98,8 +62,12 @@ class PipelineDaemon:
             """
         from tools.pipes.routines import __generate_list__, RoutineSet
         from tools.pipes.structures import RNode
+        list(map(lambda x: x.script(state.parser), RoutineSet.__all__))
+        state.parse_args()
+        print(state.args)
         routines: Dict[int, RNode] = __generate_list__(state, state.args)
         bundle_list = routines.items()
+        print(bundle_list)
         threads: dict = {}
         for (_hash, rt) in bundle_list:
             if not isinstance(rt, RNode):
@@ -112,23 +80,23 @@ class PipelineDaemon:
 
     def update(self, routines: Dict[int, RNode], threads: dict, rt: Tuple[int, RNode], cycles=False):
         p: PopList = PopList()
-        if rt[0] not in threads:
+        if rt[0] in threads and not cycles:
+            raise Exception('Detected cycle in ' + f'{rt[1]}: Cycles are prohibited')
+        if rt[1] is not None:
             threads[rt[0]] = {
                 _exec: rt[1].run,
                 inputs: rt[1].dependencies(),
                 output: p,
                 _mt: True
             }
-        else:
-            if not cycles:
-                raise Exception('Detected cycle in ' + f'{rt[1]}: Cycles are prohibited')
-        routines.pop(rt[0], None)
-        if not rt[1].dependencies() == []:
-            for ix, parent in enumerate(rt[1].h_dependencies()):
-                if parent in threads:
-                    threads[rt[0]][inputs][ix] = threads[parent][output]
-                else:
-                    self.update(routines, threads, rt=(parent, routines.get(parent)), cycles=cycles)
-                    threads[rt[0]][inputs][ix] = threads[parent][output]
+            routines.pop(rt[0], None)
+            if not rt[1].dependencies() == []:
+                for ix, parent in enumerate(rt[1].h_dependencies()):
+                    if parent in threads:
+                        threads[rt[0]][inputs][ix] = threads[parent][output]
+                    else:
+                        if routines.get(parent) is not None:
+                            self.update(routines, threads, rt=(parent, routines.get(parent)), cycles=cycles)
+                            threads[rt[0]][inputs][ix] = threads[parent][output]
         if len(routines) != 0:
             self.update(routines, threads, routines.popitem(), cycles=cycles)

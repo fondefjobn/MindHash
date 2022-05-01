@@ -1,4 +1,4 @@
-from typing import List, Optional, Union
+from typing import List, Optional, Union, Tuple
 
 from sensor.sensor_set import __all__
 from sensor.sensor_template import Sensor
@@ -43,6 +43,10 @@ class Routines(RNode):
     """
     Main Sensor Input
     """
+    @classmethod
+    def script(cls, parser) -> bool:
+        return False
+
     def __init__(self, state):
         super().__init__(state)
 

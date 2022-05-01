@@ -1,7 +1,7 @@
-from argparse import Namespace
+from argparse import Namespace, ArgumentParser
 from abc import ABC, abstractmethod
 from threading import Event
-from typing import List
+from typing import List, Tuple
 
 from numba import njit, jit
 
@@ -25,15 +25,19 @@ class State:
     """
     state: dict
     args: Namespace
+    parser: ArgumentParser
 
-    def __init__(self, args: Namespace = None):
-        self.state = {
+    def __init__(self, parser: ArgumentParser = None):
+        self.state = {  # for debugging only
             "success": True
         }
-        self.args = args
+        self.parser = parser
 
     def merge(self, new_state):
         self.state.update(new_state.state)
+
+    def parse_args(self):
+        self.args = self.parser.parse_args()
 
     def __setitem__(self, key, value):
         self.state[key] = value
@@ -84,7 +88,6 @@ class RNode(object):
         def f(*args, **kwargs):
             fnc(*args, **kwargs)
             args[2].set_full(True)  # verify this
-
         return f
 
     @abstractmethod
@@ -93,7 +96,14 @@ class RNode(object):
 
     @abstractmethod
     def dependencies(self) -> list:
+        """
+        Return RNode subclasses (non-instances) required by your RNode
+        """
         return []
+
+    @abstractmethod
+    def script(self, parser) -> bool:
+        return False
 
     def h_dependencies(self) -> list:
         return list(map(hash, self.dependencies()))

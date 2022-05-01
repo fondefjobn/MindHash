@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Tuple
 
 from tools.pipes import RNode
 from tools.structs import PopList
@@ -8,6 +8,11 @@ class Routines(RNode):
     """
     Statistic routine
     """
+
+    @classmethod
+    def script(cls, parser) -> bool:
+        return False
+
     def __init__(self, state):
         super().__init__(state)
 

@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Tuple
 
 import numpy as np
 
@@ -36,16 +36,19 @@ class Visualizer:
         )
 
 
-
 class Routines(RNode):
     """
     Visualisation routine
     """
+
+    @classmethod
+    def script(cls, parser) ->bool:
+        return False
+
     def __init__(self, state):
         super().__init__(state)
 
     def run(self, _input: List[PopList], output: PopList, **kwargs):
-        print("VIZUAAAAL ")
         visualizer = Visualizer()
         visualizer.enable()
         x = 0
@@ -59,4 +62,3 @@ class Routines(RNode):
         from streamprocessor.stream_process import Routines as processor
         from OpenPCDet.tools.evaluate import Routines as detector
         return [processor, detector]
-
