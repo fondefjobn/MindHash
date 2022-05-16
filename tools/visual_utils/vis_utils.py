@@ -1,6 +1,7 @@
 import open3d
 import matplotlib
 import numpy as np
+from pathlib import Path
 
 """
 @Module:VisUtils
@@ -17,7 +18,7 @@ box_colormap = np.array([
     [1, 1, 0],
 ], dtype=np.float64)
 
-CONFIG = "../tools/visual_utils/camera_cfg.json"
+CONFIG = "camera_cfg.json"
 
 
 class VisUtils:
@@ -32,7 +33,8 @@ class VisUtils:
         self.vis.get_render_option().background_color = np.zeros(3)
 
     def get_camera_cfg(self):
-        self.camera = open3d.io.read_pinhole_camera_parameters(CONFIG)
+        path = Path(__file__).with_name(CONFIG)
+        self.camera = open3d.io.read_pinhole_camera_parameters(str(path))
 
     def get_coor_colors(self, obj_labels):
         """

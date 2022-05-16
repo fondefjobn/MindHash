@@ -7,7 +7,6 @@ PICKLE_FILENAME = "test.pickle"
 
 def load_pickle():
     p = Path(__file__).with_name(PICKLE_FILENAME)
-    print(str(p))
     with open(p, "rb") as file:
         return pickle.load(file)
 
