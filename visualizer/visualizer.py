@@ -42,7 +42,7 @@ class Routines(RNode):
     """
 
     @classmethod
-    def script(cls, parser) ->bool:
+    def script(cls, parser) -> bool:
         return False
 
     def __init__(self, state):
