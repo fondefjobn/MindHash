@@ -8,7 +8,7 @@ from statistic.stats import Routines as R_Stat
 from streamprocessor.stream_process import Routines as R_Prc
 from tools.pipes import RNode
 from tools.routines.export import Routines as R_Export
-from visualizer.vizualizer import Routines as R_Viz
+from visualizer.visualizer import Routines as R_Viz
 
 """
     Generates ordered list of all routines that may be part of the pipeline

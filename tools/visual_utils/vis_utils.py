@@ -10,12 +10,12 @@ but with added support for moving pointclouds.
 @ModifiedBy: Bob van der Vuurst
 """
 
-box_colormap = [
+box_colormap = np.array([
     [1, 1, 1],
     [0, 1, 0],
     [0, 1, 1],
     [1, 1, 0],
-]
+], dtype=np.float64)
 
 CONFIG = "../tools/visual_utils/camera_cfg.json"
 
