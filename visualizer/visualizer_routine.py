@@ -1,39 +1,13 @@
-from typing import List, Tuple
-
-import numpy as np
-
+from typing import List
 from tools.pipes import RNode
 from tools.structs import PopList
-from tools.visual_utils import vis_utils
+from visualizer.model.visualizer import Visualizer
 
 """
 @Module: Visualization 
 @Description: Tool for visualizing the point cloud and the results of the evaluation in 3D
-@Author: Bob
+@Author: Bob van der Vuurst
 """
-
-
-class Visualizer:
-    running: bool
-    window: vis_utils.VisUtils
-
-    def enable(self):
-        self.window = vis_utils.VisUtils()
-        self.running = True
-
-    def stop(self):
-        self.running = False
-
-    def draw_frame(self, points: np.ndarray, predictions: dict):
-        """
-
-        """
-        self.window.draw_scenes(
-            points=np.asarray(points),
-            ref_boxes=np.asarray(predictions['ref_boxes']),
-            ref_scores=np.asarray(predictions['ref_scores']),
-            ref_labels=np.asarray(predictions['ref_labels'])
-        )
 
 
 class Routines(RNode):

@@ -2,6 +2,7 @@ import open3d
 import matplotlib
 import numpy as np
 from pathlib import Path
+import open3d.visualization.gui as gui
 
 """
 @Module:VisUtils
