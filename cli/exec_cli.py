@@ -23,7 +23,7 @@ def parse_config():
                            help='Evaluate input with a ML Model', action="store_true")
     argprs.add_argument('--host', type=str, default=None, help='Sensor hostname')
     argprs.add_argument('--port', type=int, default=None, help='Sensor port')
-    argprs.add_argument('--ml', type=str.upper, default='PVRCNN', choices=['PVRCNN', 'POINTRCNN', 'POINTPILLAR',
+    argprs.add_argument('--ml', type=str.upper, default='PVRCNN', choices=['PVRCNN','PVRCNN++', 'POINTRCNN', 'POINTPILLAR',
                                                                            'PARTA2', 'PP_NU'],
                            help='Model name')
     argprs.add_argument('--mlpath', type=str, default=None, help='Model path from content root')

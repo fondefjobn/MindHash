@@ -48,19 +48,20 @@ class _IO_(Sensor):
     source: client.PacketSource = None
 
     def __init__(self, args: Namespace, output: PopList):
-        params = EasyDict(FileUtils.parse_yaml(CONFIG))
-        print(params)
+        config = EasyDict(FileUtils.parse_yaml(CONFIG))
+        print(config)
         self.output = output
-        self.host = params.HOST if args.host is None else args.host
-        self.udp_port = params.LIDAR_PORT if args.port is None else args.port
-        self.PCAP = params.PCAP if args.input is None else args.input
-        self.META = params.META if args.meta is None else args.meta
-        self.N = params.N if args.n is None else args.n
+        self.host = config.HOST if args.host is None else args.host
+        self.udp_port = config.LIDAR_PORT if args.port is None else args.port
+        self.PCAP = config.PCAP if args.input is None else args.input
+        self.META = config.META if args.meta is None else args.meta
+        self.N = config.N if args.n is None else args.n
+        self.sample_rate = 0 if config.SAMPLE_RATE is None else config.SAMPLE_RATE
         self.config = client.SensorConfig()
-        self.config.udp_port_lidar = params.LIDAR_PORT
-        self.config.udp_port_imu = params.IMU_PORT
-        self.meta_path = params.META_PATH
-        self.pcap_path = params.PCAP_PATH
+        self.config.udp_port_lidar = config.LIDAR_PORT
+        self.config.udp_port_imu = config.IMU_PORT
+        self.meta_path = config.META_PATH
+        self.pcap_path = config.PCAP_PATH
         udp_dest = str(get('https://api.ipify.org').content.decode('utf8'))
         print('API read IPv4: ', udp_dest)
         self.config.udp_dest = udp_dest
@@ -139,8 +140,8 @@ class _IO_(Sensor):
         # create an iterator of LidarScans from pcap and bound it if num is specified
         scans = iter(client.Scans(source))
         if N:
-            scans = islice(scans, N)
-        for idx, scan in enumerate(scans):
+            scans = islice(scans, 0, N, self.sample_rate)
+        for scan in scans:
             frame_ls.append(self.get_matrix_cloud(xyzlut, scan, Ch.channel_arr))
         return frame_ls
 

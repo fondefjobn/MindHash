@@ -2,6 +2,7 @@ import logging
 import os
 from typing import List, TypeVar, Dict
 
+import jit as jit
 import numpy as np
 import yaml
 from easydict import EasyDict as edict
@@ -147,13 +148,16 @@ class Cloud3dUtils:
         x = matrix_cloud.clouds[Ch.XYZ][0]
         y = matrix_cloud.clouds[Ch.XYZ][1]
         z = matrix_cloud.clouds[Ch.XYZ][2]
-        frame = np.column_stack((x, y, z, np.zeros(x.shape[0], dtype=float)))
+        sig = np.zeros(x.shape[0], dtype=float)
+        elon = np.zeros(x.shape[0], dtype=float)
+        frame = np.column_stack((x, y, z, sig, elon))
         return frame
 
 
 class ArrayUtils:
 
     @staticmethod
+    @jit
     def norm_zero_one(data: np.ndarray):
         """Normalize array values to [0,1]"""
         return (data - np.min(data)) / (np.max(data) - np.min(data))

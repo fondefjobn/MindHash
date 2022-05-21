@@ -24,6 +24,7 @@ base_path = Path(__file__).parent
 file_path = "../OpenPCDet/tools/"
 ds_cfgs = {
     'PVRCNN': "cfgs/kitti_models/pv_rcnn.yaml",
+    "PVRCNN++":"cfgs/waymo_models/pv_rcnn_plusplus.yaml",
     'POINTRCNN': "cfgs/kitti_models/pointrcnn.yaml",
     'POINTPILLAR': "cfgs/kitti_models/pointpillar_pyramid_aug.yaml",
     'PARTA2': "cfgs/kitti_models/PartA2_free.yaml",
@@ -90,7 +91,7 @@ class Routines(RNode):
         config = str((base_path / ds_cfgs[state.args.ml]).resolve())
         config = cfg_from_yaml_file(config, cfg, rel_path=file_path)
         dyn_dataset = EvalDataset(config.DATA_CONFIG, class_names=config.CLASS_NAMES, training=False,
-                                  root_path=(base_path / self.def_npy).resolve(), logger=logger,
+                                  root_path=None, logger=logger,
                                   frames=_input[0])
         model = build_net(state.args.mlpath, dyn_dataset,
                           logger, config=config)
