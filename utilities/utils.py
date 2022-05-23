@@ -2,10 +2,10 @@ import logging
 import os
 from typing import List, TypeVar, Dict
 
-import jit as jit
 import numpy as np
 import yaml
 from easydict import EasyDict as edict
+from numba import jit
 from ouster import client as cl
 from yaml import SafeLoader
 

@@ -32,4 +32,4 @@ def __generate_list__(state, args: Namespace) -> Dict[int, RNode]:
                (a.visual, R_Viz),
                (a.stats, R_Stat),
                (a.export, R_Export)]
-    return dict([(hash(y), y(state)) for (x, y) in __all__ if x is not (False and None)])
+    return dict([(hash(y), y(state)) for (x, y) in __all__ if x is not (False or None)])

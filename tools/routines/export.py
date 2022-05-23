@@ -52,7 +52,7 @@ class Routines(RNode):
         FileUtils.Dir.mkdir_here(def_numpy)
         FileUtils.Dir.mkdir_here(def_json)
         while not _input[0].is_full():
-            sleep(5)
+            sleep(5)  # change to signal notify full
 
         for arg in self.state.args.export:
             ls: list
