@@ -5,7 +5,7 @@ from typing import List, Tuple
 
 from tools.pipes import RNode
 from tools.structs import PopList
-from utilities.utils import FileUtils, def_numpy, ArrayUtils
+from utilities.utils import FileUtils, def_numpy, ArrayUtils, def_json, def_pcap
 
 """
 @Module: ExportModule
@@ -50,8 +50,9 @@ class Routines(RNode):
         }
         self.log.info(msg='Export:STARTED')
         FileUtils.Dir.mkdir_here(def_numpy)
+        FileUtils.Dir.mkdir_here(def_json)
         while not _input[0].is_full():
-            sleep(5)
+            sleep(5)  # change to signal notify full
 
         for arg in self.state.args.export:
             ls: list

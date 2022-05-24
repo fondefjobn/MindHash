@@ -64,7 +64,6 @@ class PipelineDaemon:
         from tools.pipes.structures import RNode
         list(map(lambda x: x.script(state.parser), RoutineSet.__all__))
         state.parse_args()
-        print(state.args)
         routines: Dict[int, RNode] = __generate_list__(state, state.args)
         bundle_list = routines.items()
         print(bundle_list)
