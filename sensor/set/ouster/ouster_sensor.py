@@ -1,3 +1,4 @@
+import collections
 import time
 from argparse import Namespace
 from contextlib import closing

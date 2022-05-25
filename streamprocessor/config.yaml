@@ -3,10 +3,10 @@ INIT:
 STEPS:
   DISABLED: [ "" ]
   LIST:
-    - NAME: "MxCloud2PCDET"
+    - NAME: "SceneTrimV1"
       METHOD: TRIM_SCENE
       CONFIG: #limit box to X (mm) x Y (mm) x Z (mm)
-        X: [ -40,30 ]
-        Y: [ -40,40 ]
-        Z: [ -30,30 ]
+        X: [ -30,30 ]
+        Y: [ -30,30 ]
+        Z: [ -10,5 ]
   OUTPUT: [ "PCDET" ]

@@ -1,3 +1,4 @@
+from collections import deque
 from threading import Event
 from typing import List, Optional, Union, Tuple, TypeVar, Set
 
@@ -11,7 +12,7 @@ Also contains data classes.
 """
 
 
-class PopList(List):
+class PopList(deque):
     """
     PopList (PopularList) data struct
     List for concurrent writing and reading
@@ -107,7 +108,6 @@ class PopList(List):
     def _notify_all(self):
         def notify(event: Event):
             event.set()
-
         list(map(notify, self._event_ls_.copy()))
 
 
