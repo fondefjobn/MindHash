@@ -45,7 +45,17 @@ class Routines(RNode):
     """
     @classmethod
     def script(cls, parser) -> bool:
-        return False
+        parser.add_argument('--n', type=int, default=None, help='Limit number N of processed frames')
+        parser.add_argument('--sensor', default=None,
+                            help='Sensor defining input type', choices=['ouster'], type=str.lower, required=True)
+        parser.add_argument('--host', type=str, default=None, help='Sensor hostname')
+        parser.add_argument('--port', type=int, default=None, help='Sensor port')
+        parser.add_argument('--input', type=str, default=None, help='PCAP/other file for post-processing')
+        parser.add_argument('--ext', type=str, default=None, help='File input extension')
+        parser.add_argument('--meta', type=str, default=None, help='JSON metadata file for input file')
+        parser.add_argument('--live',
+                            help='Live-stream processing mode', action="store_true")
+        return True
 
     def __init__(self, state):
         super().__init__(state)

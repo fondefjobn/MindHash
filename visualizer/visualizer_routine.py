@@ -17,12 +17,14 @@ class Routines(RNode):
 
     @classmethod
     def script(cls, parser) -> bool:
-        return False
+        parser.add_argument('--visual', help='Visualize results with Open3D', action="store_true")
+        return True
 
     def __init__(self, state):
         super().__init__(state)
 
     def run(self, _input: List[PopList], output: PopList, **kwargs):
+        _input[0].get(0, self.event)
         visualizer = Visualizer()
         visualizer.enable()
         x = 0
@@ -30,7 +32,6 @@ class Routines(RNode):
             visualizer.draw_frame(_input[0].get(x, self.event),
                                   _input[1].get(x, self.event))
             x += 1
-        visualizer.stop()
 
     def dependencies(self):
         from streamprocessor.stream_process import Routines as processor

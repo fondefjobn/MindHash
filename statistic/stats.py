@@ -10,8 +10,8 @@ class Routines(RNode):
     """
 
     @classmethod
-    def script(cls, parser) -> bool:
-        return False
+    def script(cls, parser):
+        parser.add_argument('--stats', help='Generate statistic', action="store_true")
 
     def __init__(self, state):
         super().__init__(state)

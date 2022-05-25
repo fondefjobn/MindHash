@@ -3,6 +3,7 @@ llvmlite
 numba
 requests
 wrapt
+matplotlib
 django
 tensorboardX
 easydict
@@ -13,3 +14,6 @@ tqdm
 ouster-sdk[examples]
 spconv-cu114
 SharedArray
+filterpy
+tensorflow
+waymo-open-dataset-tf-2-6-0==1.4.8

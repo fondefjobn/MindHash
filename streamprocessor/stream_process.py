@@ -4,7 +4,8 @@ from typing import List, Tuple
 from numba import jit
 
 from tools.pipes import RNode
-from tools.structs.custom_structs import PopList
+from tools.pipes.structures import RModule
+from tools.structs.custom_structs import PopList, MatrixCloud
 from utilities.utils import FileUtils as Fs, \
     Cloud3dUtils
 
@@ -34,33 +35,39 @@ Q = Queue
 
 ################
 
-class StreamProcessor:
+class StreamProcessor(RModule):
     """
     StreamProcessor
     Executes data filtering and augmentation tasks
     Configuration file establishes the behavior of this class
     See Also config.yaml within package
     """
-    config: dict = None
+
+    c: dict = None
+
     idle: bool = False
 
     def __init__(self, cfg_path=None):  # def __init__(self, cfg_path=None): #
-        pass
+        super().__init__()
 
     def _load_config(self, cfg_path):
-        self.config = Fs.parse_yaml(cfg_path)
+        self.c = Fs.parse_yaml(cfg_path)
 
-    def read_stream(self, mx):
+    def read_stream(self, mx: MatrixCloud):
         return Cloud3dUtils.to_pcdet(mx)
+
+    def config(self):
+        return "config.yaml"
 
 
 class Routines(RNode):
     """
     StreamProcessor routine
     """
+
     @classmethod
     def script(cls, parser) -> bool:
-        return False
+        return True
 
     def __init__(self, state):
         super().__init__(state)

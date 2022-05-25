@@ -9,6 +9,8 @@ __pycache__/
 # PCAP files
 *.pcap
 
+# TensorFlow records
+*.tfrecord
 
 # Checkpoint models
 *.pth

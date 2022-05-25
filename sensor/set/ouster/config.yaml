@@ -4,8 +4,8 @@ LIDAR_PORT: 8000
 IMU_PORT: 7503
 PCAP: '../resources/pcap/OS1-128_Rev-05_Urban-Drive.pcap'
 META: '../resources/pcap/OS1-128_Rev-05_Urban-Drive.json'
-SAMPLE_RATE: 0 # delay
+SAMPLE_RATE: 1 # delay
 LIST_SIZE: -1 #inf
 META_PATH: /metadata # output from live metadata fetching
 PCAP_PATH: /pcap # for recordings
-N: # number of samples read
+N: 50000 # number of samples read

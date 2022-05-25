@@ -1,12 +1,15 @@
 from threading import Event
 from typing import List, Optional, Union, Tuple, TypeVar, Set
 
+from numpy import ndarray
+
 """
 @Module: Custom Data Structures
 @Description: Contains classes extending functionalities (Decorators) or offering new functionalities from scratch.
 Also contains data classes.
 @Author: Radu Rebeja
 """
+
 
 class PopList(List):
     """
@@ -104,6 +107,7 @@ class PopList(List):
     def _notify_all(self):
         def notify(event: Event):
             event.set()
+
         list(map(notify, self._event_ls_.copy()))
 
 
@@ -116,9 +120,10 @@ class MatrixCloud:
     """
 
     def __init__(self):
-
         self.timestamps = None
-        self.clouds = {Ch.XYZ: None}
+        self.X: ndarray = None
+        self.Y: ndarray = None
+        self.Z: ndarray = None
         self.channels = {
             Ch.NEAR_IR: None,
             Ch.SIGNAL: None,
@@ -131,5 +136,4 @@ class Ch:
     NEAR_IR = 'NEAR_IR'
     REFLECTIVITY = 'REFLECTIVITY'
     SIGNAL = 'SIGNAL'
-    XYZ = 'XYZ'
     channel_arr = [RANGE, SIGNAL, NEAR_IR, REFLECTIVITY]  # exact order of fields

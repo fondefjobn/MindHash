@@ -3,12 +3,13 @@ from threading import Event
 from typing import List, Tuple
 
 import torch
+from easydict import EasyDict
 from pcdet.datasets import DatasetTemplate
 from pcdet.models import build_network, load_data_to_gpu
 from pcdet.utils import common_utils
 
 from OpenPCDet.pcdet.config import cfg, cfg_from_yaml_file
-from tools.pipes import RNode
+from tools.pipes import RNode, State
 from tools.structs.custom_structs import PopList
 
 """
@@ -24,9 +25,10 @@ base_path = Path(__file__).parent
 file_path = "../OpenPCDet/tools/"
 ds_cfgs = {
     'PVRCNN': "cfgs/kitti_models/pv_rcnn.yaml",
-    "PVRCNN++":"cfgs/waymo_models/pv_rcnn_plusplus.yaml",
+    "PVRCNN++": "cfgs/waymo_models/pv_rcnn_plusplus.yaml",
     'POINTRCNN': "cfgs/kitti_models/pointrcnn.yaml",
     'POINTPILLAR': "cfgs/kitti_models/pointpillar_pyramid_aug.yaml",
+    'POINTPILLAR++': "cfgs/waymo_models/pointpillar_1x.yaml",
     'PARTA2': "cfgs/kitti_models/PartA2_free.yaml",
     'PP_NU': "cfgs/nuscenes_models/cbgs_voxel0075_res3d_centerpoint.yaml"
     # PP_NU requires different shape [x,y,z,intensity,timestamp/0]
@@ -74,22 +76,39 @@ class Routines(RNode):
     """
     3D-Detector routine
     """
+    model_config: EasyDict = None
+
     @classmethod
     def script(cls, parser) -> bool:
-        return False
+        parser.add_argument('--eval',
+                            help='Evaluate input with a ML Model', action="store_true")
+        parser.add_argument('--ml', type=str.upper, default='PVRCNN', choices=['PVRCNN', 'PVRCNN++', 'POINTRCNN',
+                                                                               'POINTPILLAR', 'POINTPILLAR++',
+                                                                               'PARTA2', 'PP_NU'],
+                            help='Model name')
+        parser.add_argument('--mlpath', type=str, default=None, help='Model path from content root')
+        parser.add_argument('--th', type=float, default=0.3, help='Detections score threshold ')
+        return True
 
     def_npy = 'MindHash/OpenPCDet/tools/format.npy'
 
     def __init__(self, state):
         super().__init__(state)
+        self.logger = common_utils.create_logger()
+        config = str((base_path / ds_cfgs[state.args.ml]).resolve())
+        self.model_config = cfg_from_yaml_file(config, cfg, rel_path=file_path)
+        self.custom_config(state)
+
+    def custom_config(self, state: State):
+        args = state.args
+        config = self.model_config
+        config.MODEL.POST_PROCESSING.SCORE_THRESH = args.th if args.th < 1 else 0.3
 
     @RNode.assist
     def run(self, _input: List[PopList], output: PopList, **kwargs):
         state = self.state
-        state['labels'] = labels
-        logger = common_utils.create_logger()
-        config = str((base_path / ds_cfgs[state.args.ml]).resolve())
-        config = cfg_from_yaml_file(config, cfg, rel_path=file_path)
+        logger = self.logger
+        config = self.model_config
         dyn_dataset = EvalDataset(config.DATA_CONFIG, class_names=config.CLASS_NAMES, training=False,
                                   root_path=None, logger=logger,
                                   frames=_input[0])

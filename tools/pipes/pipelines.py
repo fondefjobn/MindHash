@@ -66,7 +66,6 @@ class PipelineDaemon:
         state.parse_args()
         routines: Dict[int, RNode] = __generate_list__(state, state.args)
         bundle_list = routines.items()
-        print(bundle_list)
         threads: dict = {}
         for (_hash, rt) in bundle_list:
             if not isinstance(rt, RNode):

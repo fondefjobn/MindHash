@@ -1,1 +1,15 @@
-# Config for stream_processor
+INIT:
+  PLACEHOLDER: NULL
+STEPS:
+  DISABLED: [ "" ]
+  LIST:
+    - NAME: "MxCloud2PCDET"
+      METHOD: TRIM_SCENE
+      CONFIG:
+      [
+        [1000,1000,1000]
+      ]
+  OUTPUT:
+  [
+    "PCDET"
+  ]

@@ -6,6 +6,7 @@ import numpy as np
 import yaml
 from easydict import EasyDict as edict
 from numba import jit
+from numpy import ndarray
 from ouster import client as cl
 from yaml import SafeLoader
 
@@ -145,22 +146,20 @@ class Cloud3dUtils:
         # field_vals = matrix_cloud.channels[Ch.SIGNAL]
         # field_vals = ArrayUtils.norm_zero_one(field_vals)
         # get all data as one H x W x n (inputs) int64 array
-        x = matrix_cloud.clouds[Ch.XYZ][0]
-        y = matrix_cloud.clouds[Ch.XYZ][1]
-        z = matrix_cloud.clouds[Ch.XYZ][2]
-        sig = np.zeros(x.shape[0], dtype=float)
+        x = matrix_cloud.X
+        y = matrix_cloud.Y
+        z = matrix_cloud.Z
+        sig = ArrayUtils.norm_zero_one(matrix_cloud.channels[Ch.SIGNAL])
         elon = np.zeros(x.shape[0], dtype=float)
-        frame = np.column_stack((x, y, z, sig, elon))
+        frame = np.column_stack((x, y, z, sig.flatten(), elon))
         return frame
-
 
 class ArrayUtils:
 
     @staticmethod
-    @jit
-    def norm_zero_one(data: np.ndarray):
+    def norm_zero_one(data: np.ndarray) -> ndarray:
         """Normalize array values to [0,1]"""
-        return (data - np.min(data)) / (np.max(data) - np.min(data))
+        return (data - np.min(data))/np.ptp(data)
 
     @staticmethod
     def np_dict_to_list(data: dict):

@@ -64,7 +64,7 @@ class VisUtils:
 
         pts = open3d.geometry.PointCloud()
         pts.points = open3d.utility.Vector3dVector(points[:, :3])
-        vis.add_geometry(pts, reset_bounding_box=False)
+        vis.add_geometry(pts)
 
         if point_colors is None:
             pts.colors = open3d.utility.Vector3dVector(np.ones((points.shape[0], 3)))

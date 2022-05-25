@@ -158,10 +158,9 @@ class _IO_(Sensor):
         xyz = client.destagger(self.METADATA, xyz)
 
         for ix, ch in enumerate(scan.fields):
-            f = scan.field(ch)
-            matrix_cloud.channels[field_names[ix]] = f
-        x, y, z = [c.flatten() for c in np.dsplit(xyz, 3)]
-        matrix_cloud.clouds[Ch.XYZ] = [x, y, z]
+            matrix_cloud.channels[field_names[ix]] = client.destagger(self.METADATA, scan.field(ch))
+        matrix_cloud.X, matrix_cloud.Y, matrix_cloud.Z = \
+            [c.flatten() for c in np.dsplit(xyz, 3)]
         return matrix_cloud
 
 

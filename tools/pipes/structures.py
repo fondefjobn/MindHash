@@ -3,6 +3,7 @@ from abc import ABC, abstractmethod
 from threading import Event
 from typing import List, Tuple
 
+from easydict import EasyDict
 from numba import njit, jit
 
 from tools.structs import PopList
@@ -46,6 +47,20 @@ class State:
         return self.state[key]
 
 
+class RModule(object):
+
+    def __init__(self):
+        pass
+
+
+    def generate_steps(self):
+        pass
+
+    @abstractmethod
+    def config(self):
+        return None
+
+
 class RNode(object):
     """
     Parent class of routines acting as nodes in pipes.pipeline.PipelineDaemon
@@ -54,6 +69,7 @@ class RNode(object):
     import logging
     logging.basicConfig(format='%(levelname)s:%(message)s', level=logging.INFO)
     log = logging
+    config: EasyDict = None
     lspos = 2  # starting position for pop-list tuple
 
     def __init__(self, state):
@@ -88,6 +104,7 @@ class RNode(object):
         def f(*args, **kwargs):
             fnc(*args, **kwargs)
             args[2].set_full(True)  # verify this
+
         return f
 
     @abstractmethod

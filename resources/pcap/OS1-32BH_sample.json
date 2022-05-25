@@ -140,7 +140,7 @@
         0,
         1
     ],
-    "lidar_mode": "1024x10",
+    "lidar_mode": "zx10",
     "lidar_origin_to_beam_origin_mm": 15.806,
     "lidar_to_sensor_transform": 
     [
