@@ -1,5 +1,6 @@
 import logging
 import os
+import traceback
 from typing import List, TypeVar, Dict
 
 import numpy as np
@@ -11,7 +12,6 @@ from ouster import client as cl
 from yaml import SafeLoader
 
 from tools.structs.custom_structs import Ch, MatrixCloud
-
 """
 @Module: Utilities
 @Description: Provides general utility functions
@@ -96,6 +96,7 @@ class FileUtils:
                 else:
                     return parse_f(f, *args, **kwargs)
         except (OSError, yaml.YAMLError):
+            traceback.print_exc()
             logging.critical(msg='Error loading file')
             return None
 
@@ -151,8 +152,9 @@ class Cloud3dUtils:
         z = matrix_cloud.Z
         sig = ArrayUtils.norm_zero_one(matrix_cloud.channels[Ch.SIGNAL])
         elon = np.zeros(x.shape[0], dtype=float)
-        frame = np.column_stack((x, y, z, sig.flatten(), elon))
-        return frame
+        sectors = np.array_split(np.column_stack((x, y, z, sig.flatten(), elon)), indices_or_sections=4, axis=0)
+        sectors = np.concatenate((sectors[1], sectors[2]))
+        return sectors
 
 class ArrayUtils:
 

@@ -129,6 +129,7 @@ class MatrixCloud:
             Ch.SIGNAL: None,
             Ch.REFLECTIVITY: None
         }
+        self.LEN = 0
 
 
 class Ch:

@@ -5,11 +5,8 @@ STEPS:
   LIST:
     - NAME: "MxCloud2PCDET"
       METHOD: TRIM_SCENE
-      CONFIG:
-      [
-        [1000,1000,1000]
-      ]
-  OUTPUT:
-  [
-    "PCDET"
-  ]
+      CONFIG: #limit box to X (mm) x Y (mm) x Z (mm)
+        X: [ -40,30 ]
+        Y: [ -40,40 ]
+        Z: [ -30,30 ]
+  OUTPUT: [ "PCDET" ]

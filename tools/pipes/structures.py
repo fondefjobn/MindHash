@@ -1,12 +1,14 @@
-from argparse import Namespace, ArgumentParser
+import os
 from abc import ABC, abstractmethod
+from argparse import Namespace, ArgumentParser
+from pathlib import Path
 from threading import Event
-from typing import List, Tuple
+from typing import List
 
 from easydict import EasyDict
-from numba import njit, jit
+from numba import njit
 
-from tools.structs import PopList
+from utilities.utils import FileUtils
 
 
 class BundleDictionary(ABC):
@@ -48,16 +50,23 @@ class State:
 
 
 class RModule(object):
+    config: EasyDict
 
     def __init__(self):
         pass
 
-
     def generate_steps(self):
         pass
 
+    def load_config(self, __file__):
+        path = os.path.join(os.path.dirname(os.path.realpath(__file__)), Path(self.fconfig()))
+        self.config = EasyDict(FileUtils.parse_yaml(str(path)))
+
+    def compose(self, struct: object):
+        pass
+
     @abstractmethod
-    def config(self):
+    def fconfig(self):
         return None
 
 

@@ -1,13 +1,15 @@
 from queue import Queue
 from typing import List, Tuple
 
+import numpy as np
+from easydict import EasyDict
 from numba import jit
 
 from tools.pipes import RNode
 from tools.pipes.structures import RModule
 from tools.structs.custom_structs import PopList, MatrixCloud
 from utilities.utils import FileUtils as Fs, \
-    Cloud3dUtils
+    Cloud3dUtils, FileUtils
 
 """
 @Module: Stream Processor
@@ -49,14 +51,25 @@ class StreamProcessor(RModule):
 
     def __init__(self, cfg_path=None):  # def __init__(self, cfg_path=None): #
         super().__init__()
-
-    def _load_config(self, cfg_path):
-        self.c = Fs.parse_yaml(cfg_path)
+        self.load_config(__file__)
+        print(self.config)
 
     def read_stream(self, mx: MatrixCloud):
-        return Cloud3dUtils.to_pcdet(mx)
+        pcd = Cloud3dUtils.to_pcdet(mx)
+        config = self.config
+        param = config.STEPS.LIST[0].CONFIG
+        pcd = pcd[((pcd[:, 0] > param.X[0]) &
+                   (pcd[:, 0] < param.X[1]))
+                  &
+                  ((pcd[:, 1] > param.Y[0]) &
+                   (pcd[:, 1] < param.Y[1]))
+                  &
+                  ((pcd[:, 2] > param.Z[0]) &
+                   (pcd[:, 2] < param.Z[1]))
+                  ]
+        return pcd
 
-    def config(self):
+    def fconfig(self):
         return "config.yaml"
 
 
