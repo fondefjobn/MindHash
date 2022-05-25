@@ -19,7 +19,7 @@ box_colormap = np.array([
     [1, 1, 0],
 ], dtype=np.float64)
 
-CONFIG = "camera_cfg.json"
+CONFIG = "camera_cfg_birds_eye.json"
 
 
 class VisUtils:
@@ -64,7 +64,7 @@ class VisUtils:
 
         pts = open3d.geometry.PointCloud()
         pts.points = open3d.utility.Vector3dVector(points[:, :3])
-        vis.add_geometry(pts)
+        vis.add_geometry(pts, reset_bounding_box=False)
 
         if point_colors is None:
             pts.colors = open3d.utility.Vector3dVector(np.ones((points.shape[0], 3)))
