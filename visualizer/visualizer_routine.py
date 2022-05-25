@@ -24,13 +24,14 @@ class Routines(RNode):
 
     def run(self, _input: List[PopList], output: PopList, **kwargs):
         visualizer = Visualizer()
-        visualizer.enable()
+        visualizer.start()
         x = 0
-        while visualizer.running and not _input[0].full(x):
-            visualizer.draw_frame(_input[0].get(x, self.event),
-                                  _input[1].get(x, self.event))
+        while not _input[0].full(x):
+            print(f"frame {x}")
+            visualizer.add_frame(_input[0].get(x, self.event),
+                                 _input[1].get(x, self.event))
             x += 1
-        visualizer.stop()
+        #visualizer.stop()
 
     def dependencies(self):
         from streamprocessor.stream_process import Routines as processor

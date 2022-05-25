@@ -2,19 +2,19 @@ import open3d as o3d
 import open3d.visualization.gui as gui
 import open3d.visualization.rendering as rendering
 
+WINDOW_WIDTH = 1920
+WINDOW_HEIGHT = 1080
+SCENE_WIDTH = 1600
+SCENE_HEIGHT = 900
+
 
 class ExampleWindow:
 
     def __init__(self):
-        interface = gui.Application.instance.create_window("Mindhash", 1920, 1080)
-
-        frame = gui.Horiz()
+        interface = gui.Application.instance.create_window("Mindhash", WINDOW_WIDTH, WINDOW_HEIGHT)
 
         # 3d viewer and progress bar
-        playback = gui.Vert()
         scene_widget = gui.SceneWidget()
-        scene_widget.frame.width = 1600
-        scene_widget.frame.height = 900
         scene = rendering.Open3DScene(interface.renderer)
         scene_widget.scene = scene
 
@@ -27,9 +27,8 @@ class ExampleWindow:
         material = rendering.Material()
         scene.add_geometry("cone", cone, material)
 
-        playback.add_child(scene_widget)
-
         media_controls = gui.Horiz()
+        media_controls.frame = gui.Rect(0, SCENE_HEIGHT, SCENE_WIDTH, WINDOW_HEIGHT-SCENE_HEIGHT)
         play_pause = gui.Button("play/pause")
         progress_bar = gui.ProgressBar()
         progress_bar.value = 0.4
@@ -37,10 +36,9 @@ class ExampleWindow:
         media_controls.add_child(play_pause)
         media_controls.add_child(progress_bar)
 
-        playback.add_child(media_controls)
-
         # init settings panel
         settings = gui.Vert()
+        settings.frame = gui.Rect(SCENE_WIDTH, 0, WINDOW_WIDTH-SCENE_WIDTH, WINDOW_HEIGHT)
 
         # fps
         fps = gui.Horiz()
@@ -114,10 +112,11 @@ class ExampleWindow:
         settings.add_child(camera_area)
         settings.add_child(save_button)
 
-        frame.add_child(playback)
-        frame.add_child(settings)
+        scene_widget.frame = gui.Rect(0, 0, SCENE_WIDTH, SCENE_HEIGHT)
 
-        interface.add_child(frame)
+        interface.add_child(settings)
+        interface.add_child(media_controls)
+        interface.add_child(scene_widget)
 
 
 def main():
