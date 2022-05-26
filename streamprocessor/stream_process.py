@@ -104,12 +104,12 @@ class Routines(RNode):
         -------
 
         """
-        self.state.logger(msg="Stream Processor started...")
+        self.state.logger.info(msg="Stream Processor started...")
         while not _input[0].full(self.ix):
             out = _input[0].qy(self.ix, self.event)
             output.append(self.sp.read_stream(out))
             self.ix += 1
-        self.state.logger(msg="Stream Processor : DONE")
+        self.state.logger.info(msg="Stream Processor : DONE")
 
     def dependencies(self):
         from sensor.sensor_controller import Routines as Input

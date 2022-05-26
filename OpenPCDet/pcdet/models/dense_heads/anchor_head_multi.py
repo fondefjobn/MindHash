@@ -182,7 +182,7 @@ class AnchorHeadMulti(AnchorHeadTemplate):
             num_anchors_per_location = sum([self.num_anchors_per_location[class_names.index(head_cls)]
                                             for head_cls in rpn_head_cfg['HEAD_CLS_NAME']])
             head_label_indices = torch.from_numpy(np.array([
-                self.class_names.iX(cur_name) + 1 for cur_name in rpn_head_cfg['HEAD_CLS_NAME']
+                self.class_names.index(cur_name) + 1 for cur_name in rpn_head_cfg['HEAD_CLS_NAME']
             ]))
 
             rpn_head = SingleHead(
