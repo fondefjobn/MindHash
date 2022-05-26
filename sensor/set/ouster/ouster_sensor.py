@@ -58,6 +58,7 @@ class _IO_(Sensor):
         self.META = config.META if args.meta is None else args.meta
         self.N = config.N if args.n is None else args.n
         self.sample_rate = 0 if config.SAMPLE_RATE is None else config.SAMPLE_RATE
+        self.BATCH_SIZE = 10 if config.BATCH_SIZE is None else config.BATCH_SIZE
         self.config = client.SensorConfig()
         self.config.udp_port_lidar = config.LIDAR_PORT
         self.config.udp_port_imu = config.IMU_PORT
@@ -65,6 +66,8 @@ class _IO_(Sensor):
         self.pcap_path = config.PCAP_PATH
         udp_dest = str(get('https://api.ipify.org').content.decode('utf8'))
         print('API read IPv4: ', udp_dest)
+        if not (self.PCAP or self.META):
+            raise IOError("Missing input for post-processing")
         self.config.udp_dest = udp_dest
         self.config.operating_mode = client.OperatingMode.OPERATING_NORMAL
         self.config.lidar_mode = client.LidarMode.MODE_2048x10
@@ -129,21 +132,24 @@ class _IO_(Sensor):
         with open(self.META) as f:
             metadata = client.SensorInfo(f.read())
             self.METADATA = metadata
-            source = pcap.Pcap(self.PCAP, metadata)
-            self.ouster_pcap_to_mxc(source, metadata, frame_ls=self.output, N=self.N)
+        source = pcap.Pcap(self.PCAP, metadata)
+        self.ouster_pcap_to_mxc(source, metadata, frame_ls=self.output, N=self.N)
 
     def ouster_pcap_to_mxc(self, source: client.PacketSource, metadata: client.SensorInfo, frame_ls: PopList,
-                           N: int = 1,
+                           N: int = None,
                            ) -> List[MatrixCloud]:
         from itertools import islice
         # precompute xyzlut to save computation in a loop
         xyzlut = client.XYZLut(metadata)
         # create an iterator of LidarScans from pcap and bound it if num is specified
         scans = iter(client.Scans(source))
-        if N:
-            scans = islice(scans, 0, N, self.sample_rate)
-        for scan in scans:
-            frame_ls.append(self.get_matrix_cloud(xyzlut, scan, Ch.channel_arr))
+        batch_sz = self.BATCH_SIZE
+        if N < batch_sz or batch_sz > N:
+            batch_sz = N
+        for chk in range(0, N, batch_sz):
+            batch = islice(scans, chk, chk + batch_sz - 1, self.sample_rate)
+            for scan in batch:
+                frame_ls.append(self.get_matrix_cloud(xyzlut, scan, Ch.channel_arr))
         return frame_ls
 
     def get_matrix_cloud(self, xyzlut: client.XYZLut, scan, channel_arr: List[str]) -> MatrixCloud:
