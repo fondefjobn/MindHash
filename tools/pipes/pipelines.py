@@ -55,7 +55,7 @@ class PlineMod(RModule, ABC):
             for rt in routines.values():
                 ix = rt.routine.get_index()
                 min_index = ix if ix < min_index else min_index
-            if min_index > self.delay:
+            if min_index > self.delay:  # requires handling dead/stuck threads
                 clean_ls: List[int] = list(range(self.delay, min_index))
                 for ls in self.lists:
                     if len(ls) != 0:
@@ -124,7 +124,7 @@ class Pipeline(PlineMod):
 
         # generate active routine set using args
         routines: Dict[int, RNode] = __generate_list__(state, state.args)
-
+        print(routines)
         # verify routines
         bundle_list = routines.items()
         threads: Dict[int, ThreadData] = {}
