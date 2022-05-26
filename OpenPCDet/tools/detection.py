@@ -63,7 +63,7 @@ class EvalDataset(DatasetTemplate):
         return len(self.sample_file_list)
 
     def __getitem__(self, index):
-        points = self.frames.get(index, self.event)
+        points = self.frames.qy(index, self.event)
         input_dict = {
             'points': points,
             'frame_id': index,
@@ -76,6 +76,11 @@ class Routines(RNode):
     """
     3D-Detector routine
     """
+    ix: int = 0
+
+    def get_index(self) -> int:
+        return self.ix
+
     model_config: EasyDict = None
 
     @classmethod
@@ -94,7 +99,7 @@ class Routines(RNode):
 
     def __init__(self, state):
         super().__init__(state)
-        self.logger = common_utils.create_logger()
+        self.logger = self.state.logger
         config = str((base_path / ds_cfgs[state.args.ml]).resolve())
         self.model_config = cfg_from_yaml_file(config, cfg, rel_path=file_path)
         self.custom_config(state)
@@ -115,10 +120,9 @@ class Routines(RNode):
         model = build_net(state.args.mlpath, dyn_dataset,
                           logger, config=config)
         with torch.no_grad():
-            x = 0
-            while not _input[0].full(x):
-                data_dict = dyn_dataset[x]
-                logger.info(f'Processed frame index: \t{x + 1}')
+            while not _input[0].full(self.ix):
+                data_dict = dyn_dataset[self.ix]
+                logger.info(f'Processed frame index: \t{self.ix + 1}')
                 data_dict = dyn_dataset.collate_batch([data_dict])
                 load_data_to_gpu(data_dict)
                 pred_dicts, _ = model.forward(data_dict)
@@ -128,7 +132,7 @@ class Routines(RNode):
                     'ref_labels': pred_dicts[0]['pred_labels'].cpu().numpy()
                 }
                 output.append(out)
-                x += 1
+                self.ix += 1
 
     def dependencies(self):
         from streamprocessor.stream_process import Routines as processor

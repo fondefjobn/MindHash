@@ -1,8 +1,11 @@
+import dataclasses
 from collections import deque
 from threading import Event
-from typing import List, Optional, Union, Tuple, TypeVar, Set
+from typing import List, Optional, Union, Tuple, TypeVar, Set, Iterable, Dict
 
+import numpy as np
 from numpy import ndarray
+from wrapt import synchronized
 
 """
 @Module: Custom Data Structures
@@ -12,7 +15,16 @@ Also contains data classes.
 """
 
 
-class PopList(deque):
+class Index(int):
+    def __new__(cls, val, *args, **kwargs):
+        return super(cls, cls).__new__(cls, val)
+
+    def __add__(self, other):
+        res = super(Index, self).__add__(other)
+        return self.__class__(res)
+
+
+class PopList(dict):
     """
     PopList (PopularList) data struct
     List for concurrent writing and reading
@@ -27,12 +39,15 @@ class PopList(deque):
     _func_: str = None
     _ID_ = None
     _T = TypeVar("_T")
+    _KT = TypeVar("_KT")
+    _VT = TypeVar("_VT")
 
-    def __init__(self, seq: Optional[Union[Tuple, List]] = None, doc: str = ''):
-        prev = [] if seq is None else seq
+    def __init__(self, seq: Optional[Union[Iterable[Tuple], Dict]] = None, doc: str = ''):
+        prev = {} if seq is None else seq
         super().__init__(prev)
         self._full_ = False
         self._event_ls_ = set()
+        self._len_ = len(prev)
         self.__doc__ += doc
 
     def append(self, __object: _T) -> None:
@@ -46,10 +61,10 @@ class PopList(deque):
           -------
 
           """
-        super().append(__object)
+        self[len(self)] = __object
         self._notify_all()
 
-    def get(self, ix: int, event: Event) -> _T:
+    def qy(self, ix: int, event: Event) -> _T:
         """
         Appends threads Event object to waiting list if reached list end
 
@@ -62,7 +77,7 @@ class PopList(deque):
         -------
 
         """
-        while ix == len(self):
+        while ix not in self:
             self._event_ls_.add(event)
             event.wait()
             event.clear()
@@ -105,9 +120,21 @@ class PopList(deque):
     def get_routine(self) -> str:
         return self._func_
 
+    def clean(self, idxs: List[int]) -> None:
+        [self.pop(ix, None) for ix in idxs]
+
+    def __setitem__(self, k: _KT, v: _VT) -> None:
+        super().__setitem__(k, v)
+        self._len_ = self.__len__() + 1
+
+    @synchronized
+    def __len__(self):
+        return self._len_
+
     def _notify_all(self):
         def notify(event: Event):
             event.set()
+
         list(map(notify, self._event_ls_.copy()))
 
 

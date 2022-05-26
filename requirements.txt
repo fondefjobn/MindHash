@@ -4,6 +4,7 @@ numba
 requests
 wrapt
 matplotlib
+schedule
 django
 tensorboardX
 easydict

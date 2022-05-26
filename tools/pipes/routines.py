@@ -2,7 +2,7 @@ from argparse import Namespace
 from dataclasses import dataclass
 from typing import Dict, Set
 
-from OpenPCDet.tools.evaluate import Routines as R_Eval
+from OpenPCDet.tools.detection import Routines as R_Eval
 from sensor.sensor_controller import Routines as Input
 from statistic.stats import Routines as R_Stat
 from streamprocessor.stream_process import Routines as R_Prc
@@ -32,4 +32,4 @@ def __generate_list__(state, args: Namespace) -> Dict[int, RNode]:
                (a.visual, R_Viz),
                (a.stats, R_Stat),
                (a.export, R_Export)]
-    return dict([(hash(y), y(state)) for (x, y) in __all__ if x is not (False or None)])
+    return dict([(hash(y), y(state)) for (x, y) in __all__ if x is not None])

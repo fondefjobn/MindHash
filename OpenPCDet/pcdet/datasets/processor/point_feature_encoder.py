@@ -33,7 +33,7 @@ class PointFeatureEncoder(object):
        
         if self.point_encoding_config.get('filter_sweeps', False) and 'timestamp' in self.src_feature_list:
             max_sweeps = self.point_encoding_config.max_sweeps
-            idx = self.src_feature_list.index('timestamp')
+            idx = self.src_feature_list.iX('timestamp')
             dt = np.round(data_dict['points'][:, idx], 2)
             max_dt = sorted(np.unique(dt))[min(len(np.unique(dt))-1, max_sweeps-1)]
             data_dict['points'] = data_dict['points'][dt <= max_dt]
@@ -49,7 +49,7 @@ class PointFeatureEncoder(object):
         for x in self.used_feature_list:
             if x in ['x', 'y', 'z']:
                 continue
-            idx = self.src_feature_list.index(x)
+            idx = self.src_feature_list.iX(x)
             point_feature_list.append(points[:, idx:idx+1])
         point_features = np.concatenate(point_feature_list, axis=1)
         

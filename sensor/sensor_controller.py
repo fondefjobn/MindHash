@@ -1,3 +1,4 @@
+from math import inf
 from typing import List, Optional, Union, Tuple
 
 from sensor.sensor_set import __all__
@@ -43,6 +44,10 @@ class Routines(RNode):
     """
     Main Sensor Input
     """
+
+    def get_index(self) -> int:
+        return inf
+
     @classmethod
     def script(cls, parser) -> bool:
         parser.add_argument('--n', type=int, default=None, help='Limit number N of processed frames')
@@ -83,7 +88,7 @@ class Routines(RNode):
             sensor.convert()
         else:
             sensor.read()
-        Routines.log.info(msg='UserInput reading: done')
+        self.state.logger.info(msg='User input reading: DONE')
         return output
 
     def dependencies(self):

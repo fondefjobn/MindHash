@@ -77,6 +77,10 @@ class Routines(RNode):
     """
     StreamProcessor routine
     """
+    ix: int = 0
+
+    def get_index(self) -> int:
+        return self.ix
 
     @classmethod
     def script(cls, parser) -> bool:
@@ -100,11 +104,12 @@ class Routines(RNode):
         -------
 
         """
-        x = 0
-        while not _input[0].full(x):
-            out = _input[0].get(x, self.event)
+        self.state.logger(msg="Stream Processor started...")
+        while not _input[0].full(self.ix):
+            out = _input[0].qy(self.ix, self.event)
             output.append(self.sp.read_stream(out))
-            x += 1
+            self.ix += 1
+        self.state.logger(msg="Stream Processor : DONE")
 
     def dependencies(self):
         from sensor.sensor_controller import Routines as Input

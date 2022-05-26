@@ -1,6 +1,6 @@
 import argparse
 
-from tools.pipes import PipelineDaemon, State
+from tools.pipes import Pipeline, State
 
 """
 @Module: CLI
@@ -20,6 +20,6 @@ def parse_config():
 
 if __name__ == '__main__':
     parser = parse_config()
-    pd = PipelineDaemon()
+    pd = Pipeline()
     pd.build_pipeline(state=State(parser=parser))
     pd.execute_pipeline()

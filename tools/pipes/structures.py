@@ -1,3 +1,4 @@
+import dataclasses
 import os
 from abc import ABC, abstractmethod
 from argparse import Namespace, ArgumentParser
@@ -8,6 +9,7 @@ from typing import List
 from easydict import EasyDict
 from numba import njit
 
+from tools.structs import PopList
 from utilities.utils import FileUtils
 
 
@@ -29,6 +31,7 @@ class State:
     state: dict
     args: Namespace
     parser: ArgumentParser
+    logger = None
 
     def __init__(self, parser: ArgumentParser = None):
         self.state = {  # for debugging only
@@ -50,7 +53,7 @@ class State:
 
 
 class RModule(object):
-    config: EasyDict
+    config: EasyDict = None
 
     def __init__(self):
         pass
@@ -70,18 +73,14 @@ class RModule(object):
         return None
 
 
-class RNode(object):
+class RNode(RModule):
     """
     Parent class of routines acting as nodes in pipes.pipeline.PipelineDaemon
     Dependencies must be set by any class subclassing RNode
     """
-    import logging
-    logging.basicConfig(format='%(levelname)s:%(message)s', level=logging.INFO)
-    log = logging
-    config: EasyDict = None
-    lspos = 2  # starting position for pop-list tuple
 
     def __init__(self, state):
+        super().__init__()
         self.state = state
         self.event = Event()
 
@@ -92,7 +91,6 @@ class RNode(object):
         Additional loop functionality here - list clearing , closing ceremonies"""
 
         def loop(fnc):
-            @njit
             def f(*args, **kwargs):
                 kwargs[ixid] = i
                 while not args[1][0].full(kwargs[ixid]):
@@ -109,7 +107,6 @@ class RNode(object):
         """
         For closing processes & logging
         """
-
         def f(*args, **kwargs):
             fnc(*args, **kwargs)
             args[2].set_full(True)  # verify this
@@ -128,8 +125,21 @@ class RNode(object):
         return []
 
     @abstractmethod
+    def get_index(self) -> int:
+        return None
+
+    @abstractmethod
     def script(self, parser) -> bool:
         return False
 
     def h_dependencies(self) -> list:
         return list(map(hash, self.dependencies()))
+
+
+@dataclasses.dataclass
+class ThreadData:
+    routine: RNode
+    exec: object
+    inputs: list
+    output: PopList
+    mt: bool

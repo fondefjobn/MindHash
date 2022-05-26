@@ -63,7 +63,7 @@ class CenterHead(nn.Module):
         for cur_class_names in self.model_cfg.CLASS_NAMES_EACH_HEAD:
             self.class_names_each_head.append([x for x in cur_class_names if x in class_names])
             cur_class_id_mapping = torch.from_numpy(np.array(
-                [self.class_names.index(x) for x in cur_class_names if x in class_names]
+                [self.class_names.iX(x) for x in cur_class_names if x in class_names]
             )).cuda()
             self.class_id_mapping_each_head.append(cur_class_id_mapping)
 

@@ -4,7 +4,7 @@ from time import sleep
 from typing import List, Tuple
 
 from tools.pipes import RNode
-from tools.structs import PopList
+from tools.structs import PopList, Index
 from utilities.utils import FileUtils, def_numpy, ArrayUtils, def_json, def_pcap
 
 """
@@ -28,6 +28,14 @@ class Routines(RNode):
     Export routine
     """
 
+    def fconfig(self):
+        return None
+
+    ix: int = 0
+
+    def get_index(self) -> int:
+        return self.ix
+
     @classmethod
     def script(cls, parser) -> bool:
         parser.add_argument('--export', nargs='+', choices=[predictions, points, stats], help='Save results locally')
@@ -39,47 +47,46 @@ class Routines(RNode):
     def dependencies(self):
         from streamprocessor.stream_process import Routines as processor
         from statistic.stats import Routines as statistic
-        from OpenPCDet.tools.evaluate import Routines as detector
+        from OpenPCDet.tools.detection import Routines as detector
         return [processor, statistic, detector]
 
     def run(self, _input: List[PopList], output: PopList, **kwargs):
+        log = self.state.logger
         export = {
             points: (self.read_list, 0),
             stats: (self.read_dict, 1),
             predictions: (self.read_dict, 2)
         }
-        self.log.info(msg='Export:STARTED')
+        log.info(msg='Export:STARTED')
         FileUtils.Dir.mkdir_here(def_numpy)
         FileUtils.Dir.mkdir_here(def_json)
-        while not _input[0].is_full():
-            sleep(5)  # change to signal notify full
-
+        _input[0].qy(0, self.event)
         for arg in self.state.args.export:
             ls: list
             m, ix = export[arg]
-            ls = m(_input[ix])
+            ls = m(_input[ix]) # change to multithread ?
             with open('../resources/output/json/' + f'{arg}.json', 'w+') as x:
                 json.dump(ls, x)
-        self.log.info(msg='Export: done')
+        log.info(msg='Export: done')
 
     def read_dict(self, in_ls: PopList):
-        x = 0
         ls = []
-        while not in_ls.full(x):
+        while not in_ls.full(self.ix):
             ls.append({
-                data: ArrayUtils.np_dict_to_list(in_ls.get(x, self.event)),
-                index: x,
+                data: ArrayUtils.np_dict_to_list(in_ls.qy(self.ix, self.event)),
+                index: self.ix,
             })
-            x += 1
+            self.ix += 1
+        self.ix = 0
         return ls
 
     def read_list(self, in_ls: PopList):
-        x = 0
         ls = []
-        while not in_ls.full(x):
+        while not in_ls.full(self.ix):
             ls.append({
-                data: in_ls.get(x, self.event).tolist(),
-                index: x
+                data: in_ls.qy(self.ix, self.event).tolist(),
+                index: self.ix
             })
-            x += 1
+            self.ix += 1
+        self.ix = 0
         return ls

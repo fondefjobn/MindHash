@@ -157,7 +157,6 @@ class _IO_(Sensor):
         xyz = (xyzlut(scan.field(client.ChanField.RANGE))).astype(float)
         #   destagger mode
         xyz = client.destagger(self.METADATA, xyz)
-
         for ix, ch in enumerate(scan.fields):
             matrix_cloud.channels[field_names[ix]] = client.destagger(self.METADATA, scan.field(ch))
         matrix_cloud.X, matrix_cloud.Y, matrix_cloud.Z = \

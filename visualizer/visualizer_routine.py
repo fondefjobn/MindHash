@@ -14,6 +14,10 @@ class Routines(RNode):
     """
     Visualisation routine
     """
+    ix: int = 0
+
+    def get_index(self) -> int:
+        return self.ix
 
     @classmethod
     def script(cls, parser) -> bool:
@@ -24,16 +28,15 @@ class Routines(RNode):
         super().__init__(state)
 
     def run(self, _input: List[PopList], output: PopList, **kwargs):
-        _input[0].get(0, self.event)
+        _input[0].qy(0, self.event)
         visualizer = Visualizer()
         visualizer.enable()
-        x = 0
-        while visualizer.running and not _input[0].full(x):
-            visualizer.draw_frame(_input[0].get(x, self.event),
-                                  _input[1].get(x, self.event))
-            x += 1
+        while visualizer.running and not _input[0].full(self.ix):
+            visualizer.draw_frame(_input[0].qy(self.ix, self.event),
+                                  _input[1].qy(self.ix, self.event))
+            self.ix += 1
 
     def dependencies(self):
         from streamprocessor.stream_process import Routines as processor
-        from OpenPCDet.tools.evaluate import Routines as detector
+        from OpenPCDet.tools.detection import Routines as detector
         return [processor, detector]
