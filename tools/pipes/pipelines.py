@@ -50,19 +50,18 @@ class PlineMod(RModule, ABC):
             for rt in routines.values():
                 ix = rt.routine.get_index()
                 min_index = ix if ix < min_index else min_index
+
             if min_index > self.delay:  # requires handling dead/stuck threads
                 clean_ls: List[int] = list(range(self.delay, min_index))
                 for ls in self.lists:
+                    ls._tmp_min_ = min_index
                     if len(ls) != 0:
                         ls.clean(clean_ls)
-                print(self.delay, min_index)
                 self.delay = min_index
                 logger.info(msg="Cache cleaning iteration completed", )
-            else:
-                self.terminate = True
 
     def manage_mem(self, routines: Dict[int, dict]):
-        schedule.every(10).seconds.do(self.__cache_clean__, routines=routines)
+        schedule.every(5).seconds.do(self.__cache_clean__, routines=routines)
         while not self.terminate:
             run_pending()
             sleep(1)
@@ -140,8 +139,8 @@ class Pipeline(PlineMod):
         if rt[0] in threads and not cycles:
             raise Exception('Detected cycle in ' + f'{rt[1]}: Cycles are prohibited')
         if rt[1] is not None:
-            threads[rt[0]] = ThreadData(rt[1], rt[1].run, rt[1].dependencies(), p, True)
             self.lists.append(p)
+            threads[rt[0]] = ThreadData(rt[1], rt[1].run, rt[1].dependencies(), p, True)
             routines.pop(rt[0], None)
             if not rt[1].dependencies() == []:
                 for ix, parent in enumerate(rt[1].h_dependencies()):

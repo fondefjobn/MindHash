@@ -1,4 +1,5 @@
 import collections
+import gc
 import time
 from argparse import Namespace
 from contextlib import closing
@@ -147,9 +148,12 @@ class _IO_(Sensor):
         if N < batch_sz or batch_sz > N:
             batch_sz = N
         for chk in range(0, N, batch_sz):
-            batch = islice(scans, 0, chk + batch_sz - 1, self.sample_rate)
+            batch = islice(scans, 0, batch_sz - 1, self.sample_rate)
             for scan in batch:
                 frame_ls.append(self.get_matrix_cloud(xyzlut, scan, Ch.channel_arr))
+            while frame_ls._tmp_min_ < chk - 10:
+                time.sleep(2)
+
         return frame_ls
 
     def get_matrix_cloud(self, xyzlut: client.XYZLut, scan, channel_arr: List[str]) -> MatrixCloud:

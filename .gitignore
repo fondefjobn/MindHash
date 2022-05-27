@@ -9,6 +9,10 @@ __pycache__/
 # PCAP files
 *.pcap
 
+*.yaml
+
+resources/output/json/
+resources/pcap/
 # TensorFlow records
 *.tfrecord
 

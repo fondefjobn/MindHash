@@ -41,6 +41,7 @@ class PopList(dict):
     _T = TypeVar("_T")
     _KT = TypeVar("_KT")
     _VT = TypeVar("_VT")
+    _tmp_min_: int = 1  # temporary fix do not use
 
     def __init__(self, seq: Optional[Union[Iterable[Tuple], Dict]] = None, doc: str = ''):
         prev = {} if seq is None else seq
@@ -61,6 +62,7 @@ class PopList(dict):
           -------
 
           """
+
         self[len(self)] = __object
         self._notify_all()
 
