@@ -147,7 +147,7 @@ class _IO_(Sensor):
         if N < batch_sz or batch_sz > N:
             batch_sz = N
         for chk in range(0, N, batch_sz):
-            batch = islice(scans, chk, chk + batch_sz - 1, self.sample_rate)
+            batch = islice(scans, 0, chk + batch_sz - 1, self.sample_rate)
             for scan in batch:
                 frame_ls.append(self.get_matrix_cloud(xyzlut, scan, Ch.channel_arr))
         return frame_ls

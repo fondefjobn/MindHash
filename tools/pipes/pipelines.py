@@ -23,11 +23,6 @@ See Also Architecture document on Pipelines
 
 # Dictionary of string values
 CONFIG: str = '../tools/pipes/config.yaml'
-_inputs_: str = 'PRODUCER'
-_output_: str = 'output'
-_exec_: str = 'exec'
-_mt_: str = 'mt'
-_routine_: str = 'routine'
 
 """
     Generates ordered list of all routines that may be part of the pipeline

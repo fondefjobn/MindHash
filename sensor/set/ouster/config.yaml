@@ -9,4 +9,4 @@ LIST_SIZE: -1 #inf
 META_PATH: /metadata # output from live metadata fetching
 PCAP_PATH: /pcap # for recordings
 N: 50000 # number of samples read
-BATCH_SIZE: 5000 # size of read sensor input slice
+BATCH_SIZE: 10 # size of read sensor input slice
