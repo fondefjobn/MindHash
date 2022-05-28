@@ -57,17 +57,17 @@ class Routines(RNode):
             stats: (self.read_dict, 1),
             predictions: (self.read_dict, 2)
         }
-        log.info(msg='Export:STARTED')
+        log.info(msg='Export: STARTED')
         FileUtils.Dir.mkdir_here(def_numpy)
         FileUtils.Dir.mkdir_here(def_json)
         _input[0].qy(0, self.event)
         for arg in self.state.args.export:
             ls: list
             m, ix = export[arg]
-            ls = m(_input[ix]) # change to multithread ?
+            ls = m(_input[ix])  # TODO change to multithread ?
             with open('../resources/output/json/' + f'{arg}.json', 'w+') as x:
                 json.dump(ls, x)
-        log.info(msg='Export: done')
+        log.info(msg='Export: DONE')
 
     def read_dict(self, in_ls: PopList):
         ls = []

@@ -1,4 +1,6 @@
+import functools
 import logging
+import operator
 import sys
 import threading
 from abc import ABC
@@ -22,7 +24,7 @@ See Also Architecture document on Pipelines
 """
 
 # Dictionary of string values
-CONFIG: str = '../tools/pipes/config.yaml'
+CONFIG: str = 'config.yaml'
 
 """
     Generates ordered list of all routines that may be part of the pipeline
@@ -59,9 +61,15 @@ class PlineMod(RModule, ABC):
                         ls.clean(clean_ls)
                 self.delay = min_index
                 logger.info(msg="Cache cleaning iteration completed", )
+            else:
+                completed = self.check_completion(self.lists)
+                if completed:
+                    self.terminate = True
+                else:
+                    logger.info("Waiting for halted modules")
 
     def manage_mem(self, routines: Dict[int, dict]):
-        schedule.every(5).seconds.do(self.__cache_clean__, routines=routines)
+        schedule.every(3).seconds.do(self.__cache_clean__, routines=routines)
         while not self.terminate:
             run_pending()
             sleep(1)
@@ -154,4 +162,4 @@ class Pipeline(PlineMod):
             self.update(routines, threads, routines.popitem(), cycles=cycles)
 
     def fconfig(self):
-        return None
+        return CONFIG

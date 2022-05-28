@@ -27,14 +27,21 @@ class Routines(RNode):
     def __init__(self, state):
         super().__init__(state)
 
+    @RNode.assist
     def run(self, _input: List[PopList], output: PopList, **kwargs):
         _input[0].qy(0, self.event)
         visualizer = Visualizer()
         visualizer.enable()
-        while visualizer.running and not _input[0].full(self.ix):
-            visualizer.draw_frame(_input[0].qy(self.ix, self.event),
-                                  _input[1].qy(self.ix, self.event))
-            self.ix += 1
+        if isinstance(_input[1], PopList):
+            while visualizer.running and not _input[0].full(self.ix):
+                visualizer.draw_frame(_input[0].qy(self.ix, self.event),
+                                      _input[1].qy(self.ix, self.event))
+                self.ix += 1
+        else:
+            while visualizer.running and not _input[0].full(self.ix):
+                visualizer.draw_frame(_input[0].qy(self.ix, self.event),
+                                      None)
+                self.ix += 1
 
     def dependencies(self):
         from streamprocessor.stream_process import Routines as processor

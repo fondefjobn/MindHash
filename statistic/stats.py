@@ -20,6 +20,7 @@ class Routines(RNode):
     def __init__(self, state):
         super().__init__(state)
 
+    @RNode.assist
     def run(self, _input: List[PopList], output: PopList, **kwargs):
         pass
 

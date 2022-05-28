@@ -1,4 +1,5 @@
 import dataclasses
+import functools
 import os
 from abc import ABC, abstractmethod
 from argparse import Namespace, ArgumentParser
@@ -61,15 +62,29 @@ class RModule(object):
     def generate_steps(self):
         pass
 
-    def load_config(self, __file__):
-        path = os.path.join(os.path.dirname(os.path.realpath(__file__)), Path(self.fconfig()))
+    def load_config(self, __file__, fname: str = None):
+        load_cfg: str
+        if fname is not None:
+            load_cfg = fname
+        elif self.fconfig() is not None:
+            load_cfg = self.fconfig()
+        else:
+            raise IOError(f"Missing available config in: {__file__}")
+        path = os.path.join(os.path.dirname(os.path.realpath(__file__)), Path(load_cfg))
         self.config = EasyDict(FileUtils.parse_yaml(str(path)))
 
     def compose(self, struct: object):
         pass
 
+    @classmethod
+    def check_completion(cls, ls: List[PopList]):
+        ls = [x.is_full() for x in ls]
+        pred = lambda x: x is True
+        return functools.reduce(lambda x, y: x and pred(y), ls,
+                                True)
+
     @abstractmethod
-    def fconfig(self):
+    def fconfig(self) -> str:
         return None
 
 
@@ -107,10 +122,10 @@ class RNode(RModule):
         """
         For closing processes & logging
         """
+
         def f(*args, **kwargs):
             fnc(*args, **kwargs)
             args[2].set_full(True)  # verify this
-
         return f
 
     @abstractmethod
@@ -134,6 +149,23 @@ class RNode(RModule):
 
     def h_dependencies(self) -> list:
         return list(map(hash, self.dependencies()))
+
+
+class MissingDataclassFieldError(Exception):  # refactor to custom errors
+    pass
+
+
+@dataclasses.dataclass
+class DClass:
+    @classmethod
+    def check_missing(cls, ds):
+        try:
+            cls_fields = dataclasses.fields(ds)
+            for field in cls_fields:
+                if field is dataclasses.MISSING:
+                    raise MissingDataclassFieldError(f"{field} Not supplied in {ds}")
+        except IOError('Supplying non-dataclass instance to field checking method'):
+            raise
 
 
 @dataclasses.dataclass

@@ -82,14 +82,13 @@ class Routines(RNode):
               -------
 
               """
-        sensor: Sensor = __all__[self.state.args.sensor](self.state.args, output)
+        sensor: Sensor = __all__[self.state.args.sensor](self.state.args, output, self.state.logger)  # SensorData here?
         controller: SensorController = SensorController({}, sensor)
         if not self.state.args.live:
             sensor.convert()
         else:
             sensor.read()
         self.state.logger.info(msg='User input reading: DONE')
-        return output
 
     def dependencies(self):
         return []

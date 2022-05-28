@@ -1,5 +1,6 @@
 import collections
 import gc
+import logging
 import time
 from argparse import Namespace
 from contextlib import closing
@@ -12,13 +13,10 @@ from ouster import client, pcap
 from ouster.client import LidarPacket
 from requests import get
 
-from sensor.sensor_template import Sensor
+from sensor.sensor_template import Sensor, SensorData
 from tools.structs.custom_structs import Ch, MatrixCloud, PopList
 from utilities.utils import FileUtils
 
-default_pcap: str = '/pcap'
-default_metadata: str = '/metadata'
-CONFIG: str = '../sensor/set/ouster/config.yaml'
 """
 @Module: Ouster Sensor 
 @Description: Tools for livestreaming from an Ouster Sensor
@@ -29,6 +27,10 @@ Tasks:
 -Reading live from a sensor (not tested)
 @Author: Radu Rebeja
 """
+
+default_pcap: str = '/pcap'
+default_metadata: str = '/metadata'
+CONFIG: str = 'config.yaml'
 
 
 class _IO_CONFIG_:
@@ -49,29 +51,26 @@ class _IO_CONFIG_:
 class _IO_(Sensor):
     source: client.PacketSource = None
 
-    def __init__(self, args: Namespace, output: PopList):
-        config = EasyDict(FileUtils.parse_yaml(CONFIG))
+    def __init__(self, args: Namespace, output: PopList, logger: logging.Logger = None):
+        super().__init__(sd=SensorData(output, CONFIG, args=args, logger=logger, __file__=__file__))
+        config = self.config
         print(config)
-        self.output = output
-        self.host = config.HOST if args.host is None else args.host
+        self.host = config.HOST if args.host is None else args.host  # pull some members up super
         self.udp_port = config.LIDAR_PORT if args.port is None else args.port
         self.PCAP = config.PCAP if args.input is None else args.input
         self.META = config.META if args.meta is None else args.meta
-        self.N = config.N if args.n is None else args.n
-        self.sample_rate = 0 if config.SAMPLE_RATE is None else config.SAMPLE_RATE
-        self.BATCH_SIZE = 10 if config.BATCH_SIZE is None else config.BATCH_SIZE
-        self.config = client.SensorConfig()
-        self.config.udp_port_lidar = config.LIDAR_PORT
-        self.config.udp_port_imu = config.IMU_PORT
+        self.s_cfg = client.SensorConfig()
+        self.s_cfg.udp_port_lidar = config.LIDAR_PORT
+        self.s_cfg.udp_port_imu = config.IMU_PORT
         self.meta_path = config.META_PATH
         self.pcap_path = config.PCAP_PATH
         udp_dest = str(get('https://api.ipify.org').content.decode('utf8'))
         print('API read IPv4: ', udp_dest)
         if not (self.PCAP or self.META):
             raise IOError("Missing input for post-processing")
-        self.config.udp_dest = udp_dest
-        self.config.operating_mode = client.OperatingMode.OPERATING_NORMAL
-        self.config.lidar_mode = client.LidarMode.MODE_2048x10
+        self.s_cfg.udp_dest = udp_dest
+        self.s_cfg.operating_mode = client.OperatingMode.OPERATING_NORMAL
+        self.s_cfg.lidar_mode = client.LidarMode.MODE_2048x10
         self.__set_paths__()
         #  client.set_config(self.host, self.config) Requires testing with live sensor
         #   self.__fetch_meta__()
@@ -87,10 +86,13 @@ class _IO_(Sensor):
     def __init_dirs__(self):
         pass
 
+    def fconfig(self):
+        return CONFIG
+
     def __fetch_meta__(self):
-        print(self.host, self.config.udp_port_lidar)
+        print(self.host, self.s_cfg.udp_port_lidar)
         with closing(client.Sensor(hostname=self.host,
-                                   lidar_port=self.config.udp_port_lidar)) as source:
+                                   lidar_port=self.s_cfg.udp_port_lidar)) as source:
             source.write_metadata(self.meta_file)
 
     def __get_source__(self):
@@ -112,15 +114,15 @@ class _IO_(Sensor):
         Read SDK-controlled stream of lidar data. More latency.
         Incomplete & late frames are dropped from stream internally.
         """
-        with closing(client.Scans.stream(self.host, self.config.udp_port_lidar,
+        with closing(client.Scans.stream(self.host, self.s_cfg.udp_port_lidar,
                                          complete=False)) as stream:
             xyzlut = client.XYZLut(self.SENSOR_INFO)
             pls: PopList = self.output
             for scan in stream:
-                m = self.get_matrix_cloud(xyzlut, scan, Ch.channel_arr)
-                print('Sampled frame')
+                m = self.get_matrix_cloud(xyzlut, scan, Ch.channel_arr)  # TODO add batching
+                self.logger.info(msg='Received frame')
                 pls.append(m)
-                time.sleep(self.config['sample_rate'])
+                time.sleep(self.config.SAMPLE_RATE)
 
     def convert(self):
         """
@@ -145,15 +147,22 @@ class _IO_(Sensor):
         # create an iterator of LidarScans from pcap and bound it if num is specified
         scans = iter(client.Scans(source))
         batch_sz = self.BATCH_SIZE
-        if N < batch_sz or batch_sz > N:
+        if N < batch_sz:
             batch_sz = N
-        for chk in range(0, N, batch_sz):
-            batch = islice(scans, 0, batch_sz - 1, self.sample_rate)
-            for scan in batch:
-                frame_ls.append(self.get_matrix_cloud(xyzlut, scan, Ch.channel_arr))
-            while frame_ls._tmp_min_ < chk - 10:
-                time.sleep(2)
 
+        DELAY = self.config.DELAY
+
+        try:
+            for CHK in range(0, N, batch_sz):
+                batch = islice(scans, 0, batch_sz - 1, self.sample_rate)
+                next(batch)  # sampling batch
+                for scan in batch:
+                    frame_ls.append(self.get_matrix_cloud(xyzlut, scan, Ch.channel_arr))
+                while (frame_ls.tmp_min_ < CHK - DELAY) \
+                        and len(frame_ls) != frame_ls.tmp_min_:  # TODO verify correctness
+                    time.sleep(2)
+        except StopIteration:
+            self.logger.info("Sensor input completed, but stepped out of bounds for N.")
         return frame_ls
 
     def get_matrix_cloud(self, xyzlut: client.XYZLut, scan, channel_arr: List[str]) -> MatrixCloud:
@@ -190,7 +199,7 @@ def main():
 
     q: PopList[MatrixCloud] = PopList()
 
-    io = _IO_(q)
+    io = _IO_(q, )
     io.read()
 
 

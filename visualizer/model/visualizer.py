@@ -13,14 +13,17 @@ class Visualizer:
     def stop(self):
         self.running = False
 
-    def draw_frame(self, points: np.ndarray, predictions: dict):
+    def draw_frame(self, points: np.ndarray, predictions: dict = None):
         """
 
         """
-        self.window.draw_scenes(
-            points=np.asarray(points),
-            ref_boxes=np.asarray(predictions['ref_boxes']),
-            ref_scores=np.asarray(predictions['ref_scores']),
-            ref_labels=np.asarray(predictions['ref_labels'])
-        )
-
+        if predictions is None:
+            self.window.draw_scenes(
+                points=np.asarray(points))
+        else:
+            self.window.draw_scenes(
+                points=np.asarray(points),
+                ref_boxes=np.asarray(predictions['ref_boxes']),
+                ref_scores=np.asarray(predictions['ref_scores']),
+                ref_labels=np.asarray(predictions['ref_labels'])
+            )

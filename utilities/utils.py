@@ -153,9 +153,9 @@ class Cloud3dUtils:
         sig = ArrayUtils.norm_zero_one(matrix_cloud.channels[Ch.SIGNAL])
         elon = np.zeros(x.shape[0], dtype=float)
         #sectors = np.array_split(, indices_or_sections=4, axis=0)
-        sectors = np.column_stack((x, y, z, sig.flatten(), elon))
+        #sectors =
         #sectors = np.concatenate((sectors[2], sectors[3]))
-        return sectors
+        return np.column_stack((x, y, z, sig.flatten(), elon))
 
 class ArrayUtils:
 

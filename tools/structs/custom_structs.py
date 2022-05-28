@@ -29,19 +29,18 @@ class PopList(dict):
     PopList (PopularList) data struct
     List for concurrent writing and reading
     Uses Condition object for communication between threads
-    (returned by PopList.sub())
     Lock is created within PopList
     For more details on Condition, Locks and Threads see:
     https://docs.python.org/3.8/library/threading.html#using-locks-conditions-and-semaphores-in-the-with-statement
     """
     _full_: bool
     _event_ls_: Set[Event]
-    _func_: str = None
     _ID_ = None
     _T = TypeVar("_T")
     _KT = TypeVar("_KT")
     _VT = TypeVar("_VT")
     _tmp_min_: int = 1  # temporary fix do not use
+    _last_: _T
 
     def __init__(self, seq: Optional[Union[Iterable[Tuple], Dict]] = None, doc: str = ''):
         prev = {} if seq is None else seq
@@ -49,6 +48,7 @@ class PopList(dict):
         self._full_ = False
         self._event_ls_ = set()
         self._len_ = len(prev)
+        self._last_ = self.get(self._len_, None)
         self.__doc__ += doc
 
     def append(self, __object: _T) -> None:
@@ -64,6 +64,7 @@ class PopList(dict):
           """
 
         self[len(self)] = __object
+        self._last_ = __object
         self._notify_all()
 
     def qy(self, ix: int, event: Event) -> _T:
@@ -84,6 +85,9 @@ class PopList(dict):
             event.wait()
             event.clear()
             self._event_ls_.remove(event)
+            if ix not in self and self.full:
+                # To avoid None checkers - pass last available frame
+                return self._last_
         return self[ix]
 
     def full(self, i: int):
@@ -119,9 +123,6 @@ class PopList(dict):
         if b:
             self._notify_all()
 
-    def get_routine(self) -> str:
-        return self._func_
-
     def clean(self, idxs: List[int]) -> None:
         [self.pop(ix, None) for ix in idxs]
 
@@ -138,6 +139,10 @@ class PopList(dict):
             event.set()
 
         list(map(notify, self._event_ls_.copy()))
+
+    @property
+    def tmp_min_(self):
+        return self._tmp_min_
 
 
 class MatrixCloud:
