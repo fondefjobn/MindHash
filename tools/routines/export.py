@@ -50,6 +50,7 @@ class Routines(RNode):
         from OpenPCDet.tools.detection import Routines as detector
         return [processor, statistic, detector]
 
+    @RNode.assist
     def run(self, _input: List[PopList], output: PopList, **kwargs):
         log = self.state.logger
         export = {
