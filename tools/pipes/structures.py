@@ -62,7 +62,7 @@ class RModule(object):
     def generate_steps(self):
         pass
 
-    def load_config(self, __file__, fname: str = None):
+    def load_config(self, __file__: str, fname: str = None):
         load_cfg: str
         if fname is not None:
             load_cfg = fname
@@ -126,6 +126,7 @@ class RNode(RModule):
         def f(*args, **kwargs):
             fnc(*args, **kwargs)
             args[2].set_full(True)  # verify this
+
         return f
 
     @abstractmethod
@@ -162,7 +163,7 @@ class DClass:
         try:
             cls_fields = dataclasses.fields(ds)
             for field in cls_fields:
-                if field is dataclasses.MISSING:
+                if field in (dataclasses.MISSING, None):
                     raise MissingDataclassFieldError(f"{field} Not supplied in {ds}")
         except IOError('Supplying non-dataclass instance to field checking method'):
             raise

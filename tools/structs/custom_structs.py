@@ -39,7 +39,7 @@ class PopList(dict):
     _T = TypeVar("_T")
     _KT = TypeVar("_KT")
     _VT = TypeVar("_VT")
-    _tmp_min_: int = 1  # temporary fix do not use
+    _t_min_: int = 0  # temporary fix do not use
     _last_: _T
 
     def __init__(self, seq: Optional[Union[Iterable[Tuple], Dict]] = None, doc: str = ''):
@@ -63,7 +63,7 @@ class PopList(dict):
 
           """
 
-        self[len(self)] = __object
+        self[self.__len__()] = __object
         self._last_ = __object
         self._notify_all()
 
@@ -85,8 +85,7 @@ class PopList(dict):
             event.wait()
             event.clear()
             self._event_ls_.remove(event)
-            if ix not in self and self.full:
-                # To avoid None checkers - pass last available frame
+            if ix not in self and self._full_:  # To avoid None checkers - pass last available frame
                 return self._last_
         return self[ix]
 
@@ -123,7 +122,10 @@ class PopList(dict):
         if b:
             self._notify_all()
 
-    def clean(self, idxs: List[int]) -> None:
+    def clean(self, start: int = 0, end: int = None) -> None:
+        idxs: List[int]
+        self._t_min_ = self.__len__() if ((end is None) or (end > self._len_)) else end
+        idxs = list(range(start, self._t_min_))
         [self.pop(ix, None) for ix in idxs]
 
     def __setitem__(self, k: _KT, v: _VT) -> None:
@@ -141,8 +143,8 @@ class PopList(dict):
         list(map(notify, self._event_ls_.copy()))
 
     @property
-    def tmp_min_(self):
-        return self._tmp_min_
+    def first(self):
+        return self._t_min_
 
 
 class MatrixCloud:

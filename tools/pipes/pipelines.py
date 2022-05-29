@@ -54,11 +54,9 @@ class PlineMod(RModule, ABC):
                 min_index = ix if ix < min_index else min_index
 
             if min_index > self.delay:  # requires handling dead/stuck threads
-                clean_ls: List[int] = list(range(self.delay, min_index))
                 for ls in self.lists:
-                    ls._tmp_min_ = min_index
                     if len(ls) != 0:
-                        ls.clean(clean_ls)
+                        ls.clean(start=self.delay, end=min_index)
                 self.delay = min_index
                 logger.info(msg="Cache cleaning iteration completed", )
             else:

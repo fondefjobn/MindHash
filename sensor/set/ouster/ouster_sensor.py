@@ -140,7 +140,7 @@ class _IO_(Sensor):
 
     def ouster_pcap_to_mxc(self, source: client.PacketSource, metadata: client.SensorInfo, frame_ls: PopList,
                            N: int = None,
-                           ) -> List[MatrixCloud]:
+                           ):
         from itertools import islice
         # precompute xyzlut to save computation in a loop
         xyzlut = client.XYZLut(metadata)
@@ -158,12 +158,11 @@ class _IO_(Sensor):
                 next(batch)  # sampling batch
                 for scan in batch:
                     frame_ls.append(self.get_matrix_cloud(xyzlut, scan, Ch.channel_arr))
-                while (frame_ls.tmp_min_ < CHK - DELAY) \
-                        and len(frame_ls) != frame_ls.tmp_min_:  # TODO verify correctness
+                while (frame_ls.first < CHK - DELAY) \
+                        and len(frame_ls) != frame_ls.first:  # TODO verify correctness
                     time.sleep(2)
         except StopIteration:
             self.logger.info("Sensor input completed, but stepped out of bounds for N.")
-        return frame_ls
 
     def get_matrix_cloud(self, xyzlut: client.XYZLut, scan, channel_arr: List[str]) -> MatrixCloud:
         """"Create separate XYZ point-clouds for separate channels.
