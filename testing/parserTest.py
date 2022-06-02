@@ -7,10 +7,13 @@ from utilities.mh_parser import SAParser
 NUM_ITEMS_TEST = 2
 BOX_1 = [20, 19, 18, 10, 9, 8, 0.2]
 BOX_2 = [60, 59, 58, 15, 14, 13, 0.5]
-REF_1 = 60
-REF_2 = 70
+BOX_3 = [60, 59, 58, 15, 14, 13, 0.5]
+REF_1 = 1
+REF_2 = 1
+REF_3 = 0.5
 LABEL_1 = 1
 LABEL_2 = 2
+LABEL_3 = 2
 REF_LABELS = [LABEL_1, LABEL_2]
 REF_SCORES = [REF_1, REF_2]
 REF_BOXES = [BOX_1, BOX_2]
