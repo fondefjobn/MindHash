@@ -24,6 +24,9 @@ OPEN3D_FLAG = True
 base_path = Path(__file__).parent
 file_path = "../OpenPCDet/tools/"
 ds_cfgs = {
+    """
+    Dataset configs
+    """
     'PVRCNN': "cfgs/kitti_models/pv_rcnn.yaml",
     "PVRCNN++": "cfgs/waymo_models/pv_rcnn_plusplus.yaml",
     'POINTRCNN': "cfgs/kitti_models/pointrcnn.yaml",
@@ -32,10 +35,9 @@ ds_cfgs = {
     'PARTA2': "cfgs/kitti_models/PartA2_free.yaml",
     'PP_NU': "cfgs/nuscenes_models/cbgs_voxel0075_res3d_centerpoint.yaml"
     # PP_NU requires different shape [x,y,z,intensity,timestamp/0]
-
 }
 
-labels = {
+CLS_LABELS = {
     1: 'Car',
     2: 'Pedestrian',
     3: 'Cyclist'
@@ -45,12 +47,15 @@ labels = {
 class EvalDataset(DatasetTemplate):
     def __init__(self, dataset_cfg, class_names, training=True, root_path=None, logger=None, ext='.npy', frames=None):
         """
-        Args:
-            root_path:
-            dataset_cfg:
-            class_names:
-            training:
-            logger:
+        Parameters
+        ----------
+        dataset_cfg : EasyDict
+        class_names : dict
+        training : bool
+        root_path :
+        logger : logging.Logger
+        ext : str
+        frames : input list
         """
         super().__init__(
             dataset_cfg=dataset_cfg, class_names=class_names, training=training, root_path=root_path, logger=logger
@@ -105,12 +110,38 @@ class Routines(RNode):
         self.custom_config(state)
 
     def custom_config(self, state: State):
+        """
+        User-defined detection configuration parameters
+        Parameters
+        ----------
+        state : State
+
+        Returns
+        -------
+
+        """
         args = state.args
         config = self.model_config
         config.MODEL.POST_PROCESSING.SCORE_THRESH = args.th if args.th < 1 else 0.3
 
     @RNode.assist
     def run(self, _input: List[PopList], output: PopList, **kwargs):
+        """
+        Create dataset class
+        Build network using the provided configuration
+        Every frame is loaded to gpu and evaluated
+        Output is provided as a tensor that should be loaded back to cpu
+        & converted to numpy array
+        Parameters
+        ----------
+        _input : input lists
+        output : output list
+        kwargs : optional kwargs ({})
+
+        Returns
+        -------
+
+        """
         state = self.state
         logger = self.logger
         config = self.model_config
@@ -124,10 +155,10 @@ class Routines(RNode):
                 data_dict = dyn_dataset[self.ix]
                 logger.info(f'Processed frame index: \t{self.ix + 1}')
                 data_dict = dyn_dataset.collate_batch([data_dict])
-                load_data_to_gpu(data_dict)
+                load_data_to_gpu(data_dict)  # inspect this step
                 pred_dicts, _ = model.forward(data_dict)
                 out = {
-                    'ref_boxes': pred_dicts[0]['pred_boxes'].cpu().numpy(),
+                    'ref_boxes': pred_dicts[0]['pred_boxes'].cpu().numpy(),  # inspect time
                     'ref_scores': pred_dicts[0]['pred_scores'].cpu().numpy(),
                     'ref_labels': pred_dicts[0]['pred_labels'].cpu().numpy()
                 }
@@ -139,7 +170,20 @@ class Routines(RNode):
         return [processor]
 
 
-def build_net(ckpt, init_dataset, logger, config=cfg):
+def build_net(ckpt: str, init_dataset: DatasetTemplate, logger, config=cfg):
+    """
+    Builds network using PCDet framework methods using the torch library
+    Parameters
+    ----------
+    ckpt : checkpoint .PTH file
+    init_dataset : dataset class
+    logger :
+    config : EasyDict
+
+    Returns
+    -------
+
+    """
     model = build_network(model_cfg=config.MODEL, num_class=len(config.CLASS_NAMES), dataset=init_dataset)
     model.load_params_from_file(filename=ckpt, logger=logger, to_cpu=True)
     model.cuda()

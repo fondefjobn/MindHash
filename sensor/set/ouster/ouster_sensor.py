@@ -64,6 +64,7 @@ class _IO_(Sensor):
         self.s_cfg.udp_port_imu = config.IMU_PORT
         self.meta_path = config.META_PATH
         self.pcap_path = config.PCAP_PATH
+        self.METADATA = None
         udp_dest = str(get('https://api.ipify.org').content.decode('utf8'))
         print('API read IPv4: ', udp_dest)
         if not (self.PCAP or self.META):
@@ -73,7 +74,7 @@ class _IO_(Sensor):
         self.s_cfg.lidar_mode = client.LidarMode.MODE_2048x10
         self.__set_paths__()
         #  client.set_config(self.host, self.config) Requires testing with live sensor
-        #   self.__fetch_meta__()
+        #  self.__fetch_meta__()
 
     def __set_paths__(self, sep='/'):
         pcap_p = self.PCAP
@@ -139,8 +140,20 @@ class _IO_(Sensor):
         self.ouster_pcap_to_mxc(source, metadata, frame_ls=self.output, N=self.N)
 
     def ouster_pcap_to_mxc(self, source: client.PacketSource, metadata: client.SensorInfo, frame_ls: PopList,
-                           N: int = None,
-                           ):
+                           N: int = None):
+        """
+
+        Parameters
+        ----------
+        source : ouster-SDK source class for PCD packets
+        metadata : ouster-SDK sensor calibration & metadata class created from provided JSON
+        frame_ls : output PopList
+        N : number of frames to read
+
+        Returns
+        -------
+
+        """
         from itertools import islice
         # precompute xyzlut to save computation in a loop
         xyzlut = client.XYZLut(metadata)
@@ -177,8 +190,7 @@ class _IO_(Sensor):
         xyz = client.destagger(self.METADATA, xyz)
         for ix, ch in enumerate(scan.fields):
             matrix_cloud.channels[field_names[ix]] = client.destagger(self.METADATA, scan.field(ch))
-        matrix_cloud.X, matrix_cloud.Y, matrix_cloud.Z = \
-            [c.flatten() for c in np.dsplit(xyz, 3)]
+        matrix_cloud.xyz = [c.flatten() for c in np.dsplit(xyz, 3)]
         return matrix_cloud
 
 

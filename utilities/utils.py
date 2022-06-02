@@ -2,7 +2,7 @@ import logging
 import os
 import traceback
 from typing import List, TypeVar, Dict
-
+from numpy.typing import NDArray
 import numpy as np
 import yaml
 from easydict import EasyDict as edict
@@ -12,6 +12,7 @@ from ouster import client as cl
 from yaml import SafeLoader
 
 from tools.structs.custom_structs import Ch, MatrixCloud
+
 """
 @Module: Utilities
 @Description: Provides general utility functions
@@ -24,11 +25,6 @@ def_json: str = '../resources/output/json'
 def_pcap: str = '../resources/output/pcap_out'
 _T = TypeVar("_T")
 _K = TypeVar("_K")
-
-"""
-
-if classes become bloated we split per module
-"""
 
 logging.basicConfig(format='%(levelname)s:%(message)s', level=logging.CRITICAL)
 
@@ -140,29 +136,42 @@ class FileUtils:
 
 
 class Cloud3dUtils:
+    """
+    Method class containing methods for PCD conversion to
+    framework specific matrix shapes and data types.
+    """
 
     @staticmethod
     def to_pcdet(matrix_cloud: MatrixCloud):
+        """
+
+        Parameters
+        ----------
+        matrix_cloud : PCD scene
+
+        Returns
+        -------
+        ndarray
+        matrix (N,5) with PFE (X,Y,Z,SIGNAL,ELONGATION)
+        """
         # only store return signal intensity
         # field_vals = matrix_cloud.channels[Ch.SIGNAL]
         # field_vals = ArrayUtils.norm_zero_one(field_vals)
         # get all data as one H x W x n (inputs) int64 array
-        x = matrix_cloud.X
-        y = matrix_cloud.Y
-        z = matrix_cloud.Z
-        sig = ArrayUtils.norm_zero_one(matrix_cloud.channels[Ch.SIGNAL])
-        elon = np.zeros(x.shape[0], dtype=float)
-        #sectors = np.array_split(, indices_or_sections=4, axis=0)
-        #sectors =
-        #sectors = np.concatenate((sectors[2], sectors[3]))
-        return np.column_stack((x, y, z, sig.flatten(), elon))
+        xyz = matrix_cloud.xyz
+        sig = ArrayUtils.norm_zero_one(matrix_cloud.channels[Ch.SIGNAL])  # TODO verify
+        elon = np.zeros(xyz.shape[0], dtype=float)
+        # sectors = np.array_split(, indices_or_sections=4, axis=0)
+        # sectors = np.concatenate((sectors[2], sectors[3]))
+        return np.column_stack((xyz[0], xyz[1], xyz[2], sig.flatten(), elon))
+
 
 class ArrayUtils:
 
     @staticmethod
     def norm_zero_one(data: np.ndarray) -> ndarray:
         """Normalize array values to [0,1]"""
-        return (data - np.min(data))/np.ptp(data)
+        return (data - np.min(data)) / np.ptp(data)
 
     @staticmethod
     def np_dict_to_list(data: dict):
@@ -174,7 +183,7 @@ class ArrayUtils:
 
         Returns
         -------
-
+        list
         """
         return {key: arr.tolist() for (key, arr) in data.items()}
 

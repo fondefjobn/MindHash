@@ -55,6 +55,17 @@ class StreamProcessor(RModule):
         print(self.config)
 
     def read_stream(self, mx: MatrixCloud):
+        """
+        Converts PCD to required format and applies scene
+        editing techniques
+        Parameters
+        ----------
+        mx :
+
+        Returns
+        -------
+
+        """
         pcd = Cloud3dUtils.to_pcdet(mx)
         config = self.config
         param = config.STEPS.LIST[0].CONFIG

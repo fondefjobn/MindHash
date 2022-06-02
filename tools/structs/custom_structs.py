@@ -1,10 +1,11 @@
 import dataclasses
 from collections import deque
 from threading import Event
-from typing import List, Optional, Union, Tuple, TypeVar, Set, Iterable, Dict
+from typing import List, Optional, Union, Tuple, TypeVar, Set, Iterable, Dict, Any
 
 import numpy as np
 from numpy import ndarray
+from numpy.typing import NDArray
 from wrapt import synchronized
 
 """
@@ -39,7 +40,7 @@ class PopList(dict):
     _T = TypeVar("_T")
     _KT = TypeVar("_KT")
     _VT = TypeVar("_VT")
-    _t_min_: int = 0  # temporary fix do not use
+    _t_min_: int = 0
     _last_: _T
 
     def __init__(self, seq: Optional[Union[Iterable[Tuple], Dict]] = None, doc: str = ''):
@@ -53,7 +54,8 @@ class PopList(dict):
 
     def append(self, __object: _T) -> None:
         """
-          Appends an object to the list end and notifies all threads waiting on list update
+          Appends an object to the PopList end
+          and notifies all threads waiting in qy()
           Parameters
           ----------
           __object
@@ -67,22 +69,26 @@ class PopList(dict):
         self._last_ = __object
         self._notify_all()
 
-    def qy(self, ix: int, event: Event) -> _T:
+    def qy(self, ix: int, event: Event, timeout: float = None) -> _T:
         """
-        Appends threads Event object to waiting list if reached list end
+        Method to use for safe element querying.
+        Conditionally-blocking method - method unblocks
+        and returns an item only at the next update and availability of item
+        or timeout.
+        A timeout may return None.
 
         Parameters
         ----------
-        ix
-        event
-
+        ix : index to use for querying
+        event : caller Event object to wait until query is available
+        timeout : timeout for querying
         Returns
         -------
 
         """
         while ix not in self:
             self._event_ls_.add(event)
-            event.wait()
+            event.wait(timeout=timeout)
             event.clear()
             self._event_ls_.remove(event)
             if ix not in self and self._full_:  # To avoid None checkers - pass last available frame
@@ -123,20 +129,48 @@ class PopList(dict):
             self._notify_all()
 
     def clean(self, start: int = 0, end: int = None) -> None:
+        """
+        Method to clear elements from a PopList
+        Parameters
+        ----------
+        start : index to start begin item removal
+        end : index to stop item removal
+
+        Returns
+        -------
+
+        """
         idxs: List[int]
         self._t_min_ = self.__len__() if ((end is None) or (end > self._len_)) else end
         idxs = list(range(start, self._t_min_))
         [self.pop(ix, None) for ix in idxs]
 
     def __setitem__(self, k: _KT, v: _VT) -> None:
+        """
+
+        """
         super().__setitem__(k, v)
         self._len_ = self.__len__() + 1
 
     @synchronized
     def __len__(self):
+        """
+
+        Returns
+        -------
+        int Elements added to the list,
+        does not exclude cleared items from calculated length.
+        """
         return self._len_
 
     def _notify_all(self):
+        """
+        Notify all waiting qy() callers of update.
+        Returns
+        -------
+
+        """
+
         def notify(event: Event):
             event.set()
 
@@ -144,28 +178,32 @@ class PopList(dict):
 
     @property
     def first(self):
+        """
+
+        Returns
+        -------
+        int Index of first element
+        """
         return self._t_min_
 
 
 class MatrixCloud:
-    """Our project standardization data-structure for point clouds.
+    """
+    Our project standardization data-structure for point cloud data.
     All sensor outputs are converted to fit data into this class
-    timestamps = array of float describing timestamp in UNIX epoch time
-    clouds = [[X],[Y],[Z]] shaped matrix
-    channels
+    timestamp =  describing timestamp in UNIX epoch time
+    xyz = numpy array XYZ coordinates
+    channels = dict of numpy
     """
 
     def __init__(self):
         self.timestamps = None
-        self.X: ndarray = None
-        self.Y: ndarray = None
-        self.Z: ndarray = None
+        self.xyz: NDArray[(Any, 3), float] = None
         self.channels = {
             Ch.NEAR_IR: None,
             Ch.SIGNAL: None,
             Ch.REFLECTIVITY: None
         }
-        self.LEN = 0
 
 
 class Ch:

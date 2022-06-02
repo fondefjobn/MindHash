@@ -8,7 +8,6 @@ from threading import Event
 from typing import List
 
 from easydict import EasyDict
-from numba import njit
 
 from tools.structs import PopList
 from utilities.utils import FileUtils
@@ -130,22 +129,51 @@ class RNode(RModule):
         return f
 
     @abstractmethod
-    def run(self, _input: List[list], output: list, **kwargs):
+    def run(self, _input: List[PopList], output: PopList, **kwargs):
+        """
+
+        Parameters
+        ----------
+        _input : List of PopLists as requested respecting order specified in dependencies()
+        output : PopList used for outputting results or None if output is
+        kwargs :
+
+        Returns
+        -------
+
+        """
         pass
 
     @abstractmethod
     def dependencies(self) -> list:
         """
-        Return RNode subclasses (non-instances) required by your RNode
+        Returns
+        -------
+        List of RNode subclasses (non-instances) required by your RNode
+        Note: Said dependencies may not be instantiated depending on the script
+        arguments. Subclass implementation must handle such cases.
         """
         return []
 
     @abstractmethod
     def get_index(self) -> int:
-        return None
+        """
+
+        Returns
+        -------
+
+        Return the node's processing index (step, stage, phase) describing
+        task progress on shared data. Subclasses implement this method with
+        a private index variable.
+        """
+        return -1
 
     @abstractmethod
-    def script(self, parser) -> bool:
+    def script(self, parser: ArgumentParser) -> bool:
+        """
+        Append script arguments to the argument parser
+        Return True if said arguments
+        """
         return False
 
     def h_dependencies(self) -> list:
@@ -171,6 +199,10 @@ class DClass:
 
 @dataclasses.dataclass
 class ThreadData:
+    """
+    Dataclass ThreadData - used for pipeline construction
+    and strongly typed value storing
+    """
     routine: RNode
     exec: object
     inputs: list
