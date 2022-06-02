@@ -34,7 +34,7 @@ class TestParser(unittest.TestCase):
             None.
         """
 
-        json = SAParser(output=test_output).to_json()
+        json = SAParser(data=test_output).to_json()
         for i in range(NUM_ITEMS_TEST):
             # Test if labels are correctly ordered and copied
             self.assertEqual(json[i]['tags']['object_type'], REF_LABELS[i])
