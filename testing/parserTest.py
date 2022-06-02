@@ -4,7 +4,7 @@ from utilities.mh_parser import SAParser
 """
 @Author Frank van Houten
 """
-NUM_ITEMS_TEST = 2
+NUM_ITEMS_TEST = 3
 BOX_1 = [20, 19, 18, 10, 9, 8, 0.2]
 BOX_2 = [60, 59, 58, 15, 14, 13, 0.5]
 BOX_3 = [60, 59, 58, 15, 14, 13, 0.5]
