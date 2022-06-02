@@ -2,7 +2,6 @@ import open3d
 import matplotlib
 import numpy as np
 from pathlib import Path
-import open3d.visualization.gui as gui
 
 """
 @Module:VisUtils
@@ -27,11 +26,14 @@ class VisUtils:
     camera: open3d.camera
 
     def __init__(self):
-        self.vis = open3d.visualization.Visualizer()
+        self.vis = open3d.visualization.VisualizerWithKeyCallback()
         self.get_camera_cfg()
         self.vis.create_window(width=self.camera.intrinsic.width, height=self.camera.intrinsic.height)
         self.vis.get_render_option().point_size = 1.0
         self.vis.get_render_option().background_color = np.zeros(3)
+
+    def quit(self):
+        self.vis.close()
 
     def get_camera_cfg(self):
         path = Path(__file__).with_name(CONFIG)
@@ -58,24 +60,21 @@ class VisUtils:
         view_control = self.vis.get_view_control()
         view_control.convert_from_pinhole_camera_parameters(self.camera, allow_arbitrary=True)
 
-    def draw_scenes(self, points, gt_boxes=None, ref_boxes=None, ref_labels=None, ref_scores=None, point_colors=None):
+    def draw_scenes(self, points, gt_boxes=None, ref_boxes=None, ref_labels=None, ref_scores=None):
         vis = self.vis
         vis.clear_geometries()
 
-        pts = open3d.geometry.PointCloud()
-        pts.points = open3d.utility.Vector3dVector(points[:, :3])
-        vis.add_geometry(pts)
-
-        if point_colors is None:
-            pts.colors = open3d.utility.Vector3dVector(np.ones((points.shape[0], 3)))
-        else:
-            pts.colors = open3d.utility.Vector3dVector(point_colors)
+        if points is not None:
+            pts = open3d.geometry.PointCloud()
+            pts.points = open3d.utility.Vector3dVector(points[:, :3])
+            pts.colors = open3d.utility.Vector3dVector(np.ones((points.shape[0], 3), dtype=np.float64))
+            vis.add_geometry(pts)
 
         if gt_boxes is not None:
-            self.draw_box(gt_boxes, (0, 0, 1))
+            self.draw_box(gt_boxes, [0, 0, 1])
 
         if ref_boxes is not None:
-            self.draw_box(ref_boxes, (0, 1, 0), ref_labels, ref_scores)
+            self.draw_box(ref_boxes, [0, 1, 0], ref_labels, ref_scores)
 
         self.reset_view()
         vis.poll_events()
@@ -99,7 +98,6 @@ class VisUtils:
 
         line_set = open3d.geometry.LineSet.create_from_oriented_bounding_box(box3d)
 
-        # import ipdb; ipdb.set_trace(context=20)
         lines = np.asarray(line_set.lines)
         lines = np.concatenate([lines, np.array([[1, 4], [7, 6]])], axis=0)
 

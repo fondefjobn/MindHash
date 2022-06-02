@@ -308,7 +308,7 @@ def create_nuscenes_info(version, data_path, save_path, max_sweeps=10):
         train_scenes = splits.train
         val_scenes = splits.val
     elif version == 'v1.0-test':
-        train_scenes = splits.test
+        train_scenes = splits.toggle_pause
         val_scenes = []
     elif version == 'v1.0-mini':
         train_scenes = splits.mini_train
