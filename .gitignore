@@ -10,7 +10,7 @@ __pycache__/
 *.pcap
 
 *.yaml
-
+.scannerwork
 resources/output/json/
 resources/pcap/
 # TensorFlow records

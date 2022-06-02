@@ -2,13 +2,11 @@ import logging
 import os
 import traceback
 from typing import List, TypeVar, Dict
-from numpy.typing import NDArray
+
 import numpy as np
 import yaml
 from easydict import EasyDict as edict
-from numba import jit
 from numpy import ndarray
-from ouster import client as cl
 from yaml import SafeLoader
 
 from tools.structs.custom_structs import Ch, MatrixCloud
@@ -160,11 +158,10 @@ class Cloud3dUtils:
         # get all data as one H x W x n (inputs) int64 array
         xyz = matrix_cloud.xyz
         sig = ArrayUtils.norm_zero_one(matrix_cloud.channels[Ch.SIGNAL])  # TODO verify
-        elon = np.zeros(xyz.shape[0], dtype=float)
+        elon = np.zeros(xyz.shape[1], dtype=float)
         # sectors = np.array_split(, indices_or_sections=4, axis=0)
         # sectors = np.concatenate((sectors[2], sectors[3]))
         return np.column_stack((xyz[0], xyz[1], xyz[2], sig.flatten(), elon))
-
 
 class ArrayUtils:
 

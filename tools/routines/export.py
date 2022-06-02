@@ -62,12 +62,14 @@ class Routines(RNode):
         FileUtils.Dir.mkdir_here(def_numpy)
         FileUtils.Dir.mkdir_here(def_json)
         _input[0].qy(0, self.event)
-        for arg in self.state.args.export:
-            ls: list
-            m, ix = export[arg]
-            ls = m(_input[ix])  # TODO change to multithread ?
-            with open('../resources/output/json/' + f'{arg}.json', 'w+') as x:
-                json.dump(ls, x)
+        while not _input[0].full(self.ix):
+            for arg in self.state.args.export:
+                ls: list
+                m, ix = export[arg]
+                ls = m(_input[ix])  # TODO change to multithread ?
+                with open('../resources/output/json/' + f'{arg}.json', 'w+') as x:
+                    json.dump(ls, x)
+
         log.info(msg='Export: DONE')
 
     def read_dict(self, in_ls: PopList):

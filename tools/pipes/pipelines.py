@@ -67,7 +67,7 @@ class PlineMod(RModule, ABC):
                     logger.info("Waiting for halted modules")
 
     def manage_mem(self, routines: Dict[int, dict]):
-        schedule.every(3).seconds.do(self.__cache_clean__, routines=routines)
+        schedule.every(5).seconds.do(self.__cache_clean__, routines=routines)
         while not self.terminate:
             run_pending()
             sleep(1)
@@ -148,7 +148,8 @@ class Pipeline(PlineMod):
             self.lists.append(p)
             threads[rt[0]] = ThreadData(rt[1], rt[1].run, rt[1].dependencies(), p, True)
             routines.pop(rt[0], None)
-            if not rt[1].dependencies() == []:
+            dep_ls = rt[1].dependencies()
+            if isinstance(dep_ls, list) and dep_ls != []:
                 for ix, parent in enumerate(rt[1].h_dependencies()):
                     if parent in threads:
                         threads[rt[0]].inputs[ix] = threads[parent].output

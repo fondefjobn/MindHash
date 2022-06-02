@@ -124,7 +124,7 @@ class RNode(RModule):
 
         def f(*args, **kwargs):
             fnc(*args, **kwargs)
-            args[2].set_full(True)  # verify this
+            args[2].set_full(True)
 
         return f
 

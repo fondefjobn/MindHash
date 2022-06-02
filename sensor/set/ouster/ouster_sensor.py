@@ -55,7 +55,7 @@ class _IO_(Sensor):
         super().__init__(sd=SensorData(output, CONFIG, args=args, logger=logger, __file__=__file__))
         config = self.config
         print(config)
-        self.host = config.HOST if args.host is None else args.host  # pull some members up super
+        self.host = config.HOST if args.host is None else args.host
         self.udp_port = config.LIDAR_PORT if args.port is None else args.port
         self.PCAP = config.PCAP if args.input is None else args.input
         self.META = config.META if args.meta is None else args.meta
@@ -168,7 +168,7 @@ class _IO_(Sensor):
         try:
             for CHK in range(0, N, batch_sz):
                 batch = islice(scans, 0, batch_sz - 1, self.sample_rate)
-                next(batch)  # sampling batch
+                frame_ls.append(self.get_matrix_cloud(xyzlut, next(batch), Ch.channel_arr))  # sampling batch
                 for scan in batch:
                     frame_ls.append(self.get_matrix_cloud(xyzlut, scan, Ch.channel_arr))
                 while (frame_ls.first < CHK - DELAY) \
@@ -190,7 +190,7 @@ class _IO_(Sensor):
         xyz = client.destagger(self.METADATA, xyz)
         for ix, ch in enumerate(scan.fields):
             matrix_cloud.channels[field_names[ix]] = client.destagger(self.METADATA, scan.field(ch))
-        matrix_cloud.xyz = [c.flatten() for c in np.dsplit(xyz, 3)]
+        matrix_cloud.xyz = np.array([c.flatten() for c in np.dsplit(xyz, 3)], dtype=float)
         return matrix_cloud
 
 

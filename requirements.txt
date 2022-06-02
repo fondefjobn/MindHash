@@ -1,9 +1,9 @@
-numpy
+numpy==1.21
 llvmlite
 numba
 requests
 wrapt
-matplotlib
+matplotlibz
 schedule
 django
 tensorboardX
