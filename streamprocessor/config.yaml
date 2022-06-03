@@ -1,0 +1,12 @@
+INIT:
+  PLACEHOLDER: NULL
+STEPS:
+  DISABLED: [ "" ]
+  LIST:
+    - NAME: "SceneTrimV1"
+      METHOD: TRIM_SCENE
+      CONFIG: #limit box to X (mm) x Y (mm) x Z (mm)
+        X: [ -30,30 ]
+        Y: [ -30,30 ]
+        Z: [ -10,5 ]
+  OUTPUT: [ "PCDET" ]

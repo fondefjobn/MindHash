@@ -1,0 +1,5 @@
+# BASE CONFIG (defines mandatory shared parameters)
+N: # number of samples read
+BATCH_SIZE:  # size of read sensor input slice
+SAMPLE_RATE: # delay between sampling input
+DELAY:  #

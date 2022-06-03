@@ -1,12 +1,11 @@
-from argparse import Namespace
-from typing import List, Optional, Union
+from math import inf
+from typing import List, Optional, Union, Tuple
 
-from ouster import client, pcap
-
-from sensor.ouster_sensor import _IO_, SensorParams
-from tools.pipes import State, RoutineSet
-from tools.structs.custom_structs import PopList, MatrixCloud, Ch
-from utilities.utils import FileUtils, Cloud3dUtils
+from sensor.sensor_set import __all__
+from sensor.sensor_template import Sensor
+from tools.pipes import RNode
+from tools.structs.custom_structs import PopList
+from utilities.utils import FileUtils
 
 """
 @Module: Sensor Controller
@@ -15,69 +14,24 @@ See Also Architecture document on Pipelines
 @Author: Radu Rebeja
 """
 
-
-class Routines(RoutineSet):
-
-    def id(self):
-        return "SENSOR_BUNDLE"
-
-    channels: List[int] = [1, 2, 3, 4]
-
-    def LiveStream(self, state: State, *args):  # to be deprecated in favor of united method for any input
-        out_ls = args[1]
-        params = {
-            "hostname": state.args.host,
-            "lidar_port": state.args.port,
-            "imu_port": 7503,
-            "sample_rate": 0,
-            "output": out_ls
-        }
-        controller = SensorController(params)
-        controller.start_stream()
-
-    def user_input(self, state: State, *args):
-        """
-        Routine: User Input File post-process
-
-        Produces: UserInput
-        Consumes: User provided input
-        Requires: Pcap path
-        Parameters
-        ----------
-        state
-        args (input_list, output_list)
-
-        Returns
-        -------
-
-        """
-        if not state.args.live:
-            with open(state.args.meta, 'r') as f:
-                out_ls: PopList = args[1]
-                getattr(IO, state.args.sensor)(state.args, f, out_ls)
-                out_ls.set_full()
-            Routines.logging.info(msg='UserInput reading: done')
-        else:
-            self.LiveStream(state, args)
-
-
-default_sens_config = 'sensor/sensor_config.yaml'
+default_sens_config = 'sensor/config.yaml'
 default_stream_config = 'sensor/config.yaml'
 
 
-class SensorController(_IO_):
-    """SensorController"""
+class SensorController(object):
+    """SensorController
+    Anything spicy you want to do with your sensor happens here
+    e.g. settings """
 
-    def __init__(self, config: Optional[Union[dict, str]]):
+    def __init__(self, config: Optional[Union[dict, str]], sensor: Sensor):
         c_dict: dict
         if isinstance(config, str):
             c_dict = FileUtils.load_file(config, ext='yaml')
         else:
             c_dict = config
-        self._io = _IO_(SensorParams(c_dict))  # apply reflectance on ouster IO
 
     def start_stream(self):
-        self._io.stream_scans()
+        self._IO_.read()
 
     def stop_stream(self):
         pass
@@ -86,25 +40,57 @@ class SensorController(_IO_):
         pass
 
 
-
-
-
-class Convertor:
+class Routines(RNode):
+    """
+    Main Sensor Input
     """
 
-    """
+    def get_index(self) -> int:
+        return inf
 
-    @staticmethod
-    def ouster_pcap_to_mxc(source: client.PacketSource, metadata: client.SensorInfo, frame_ls: PopList, N: int = 1,
-                           ) -> List[MatrixCloud]:
-        # [doc-stag-pcap-to-csv]
-        from itertools import islice
-        # precompute xyzlut to save computation in a loop
-        xyzlut = client.XYZLut(metadata)
-        # create an iterator of LidarScans from pcap and bound it if num is specified
-        scans = iter(client.Scans(source))
-        if N:
-            scans = islice(scans, N)
-        for idx, scan in enumerate(scans):
-            frame_ls.add(Cloud3dUtils.get_matrix_cloud(xyzlut, scan, Ch.channel_arr))
-        return frame_ls
+    @classmethod
+    def script(cls, parser) -> bool:
+        parser.add_argument('--n', type=int, default=None, help='Limit number N of processed frames')
+        parser.add_argument('--sensor', default=None,
+                            help='Sensor defining input type', choices=['ouster'], type=str.lower, required=True)
+        parser.add_argument('--host', type=str, default=None, help='Sensor hostname')
+        parser.add_argument('--port', type=int, default=None, help='Sensor port')
+        parser.add_argument('--input', type=str, default=None, help='PCAP/other file for post-processing')
+        parser.add_argument('--ext', type=str, default=None, help='File input extension')
+        parser.add_argument('--meta', type=str, default=None, help='JSON metadata file for input file')
+        parser.add_argument('--live',
+                            help='Live-stream processing mode', action="store_true")
+        return True
+
+    def __init__(self, state):
+        super().__init__(state)
+
+    @RNode.assist
+    def run(self, _input: List[PopList], output: PopList, **kwargs):
+        """
+              Routine: User Input File post-process
+
+              Produces: UserInput
+              Consumes: User provided input
+              Requires: Pcap path
+              Parameters
+              ----------
+              state
+              args (input_list, output_list)
+
+              Returns
+              -------
+
+              """
+        sensor: Sensor = __all__[self.state.args.sensor](self.state.args, output, self.state.logger)  # SensorData here?
+        controller: SensorController = SensorController({}, sensor)
+        if not self.state.args.live:
+            sensor.convert()
+        else:
+            sensor.read()
+        self.state.logger.info(msg='User input reading: DONE')
+
+    def dependencies(self):
+        return []
+
+    channels: List[int] = [1, 2, 3, 4]

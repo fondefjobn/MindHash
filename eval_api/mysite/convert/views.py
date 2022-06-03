@@ -11,7 +11,7 @@ from OpenPCDet.pcdet.config import cfg, cfg_from_yaml_file
 from pcdet.datasets import DatasetTemplate
 from pcdet.utils import common_utils
 
-from OpenPCDet.tools.evaluate import build_net, EvalDataset, evaluate
+from OpenPCDet.tools.detection import build_net, EvalDataset, evaluate
 from utilities.mh_parser import SAParser
 from .forms import sendableFile
 import numpy

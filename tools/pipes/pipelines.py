@@ -1,11 +1,19 @@
+import functools
+import logging
+import operator
+import sys
 import threading
+from abc import ABC
+from math import inf
 from threading import Thread
-from typing import List
+from time import sleep
+from typing import List, Dict, Tuple
 
-from easydict import EasyDict
-
+import schedule
+from pcdet.utils import common_utils
+from schedule import repeat, run_pending, every
+from tools.pipes.structures import RNode, State, ThreadData, RModule
 from tools.structs import PopList
-from utilities.utils import FileUtils as fu
 
 """
 @Module: Pipelines
@@ -16,90 +24,141 @@ See Also Architecture document on Pipelines
 """
 
 # Dictionary of string values
-CONFIG: str = '../tools/pipes/config.yaml'
-PRODUCER: str = 'PRODUCER'
-CONSUMER: str = 'CONSUMER'
-_exec: str = 'exec'
-_mt: str = 'mt'
+CONFIG: str = 'config.yaml'
+
+"""
+    Generates ordered list of all routines that may be part of the pipeline
+    Tuple associates a key from CLI argparse with a routine
+    If a routine existence is required, use anything as key except None
+
+    Dict[Arg/Any | Routine]
+"""
+
+logger = common_utils.create_logger()
 
 
-def execute_pipeline(ls_pl: List[Thread]):
-    """
-    Iterate over all routines and execute all.
-    Blocking routines do not use multiprocessing (multithreading)
-    Non-Blocking create a separate process with multiprocessing lib
-    The state is shared by routines in a list
-    A routine uses the state of the previous one which defines current
-    state
-    Important: Strive for shallow state values (e.g. non-nested dicts, wrapper classes)
-    Parameters
-    ----------
-    ls_pl
-    Returns
-    -------
+class PlineMod(RModule, ABC):
+    lists: List[PopList]
+    delay: int = 0
+    terminate: bool = False
 
-    """
-    for ix, pl in enumerate(ls_pl):
-        pl.start()
+    def __init__(self):
+        super().__init__()
+        self.lists = []
 
+    def __cache_clean__(self, routines: Dict[int, ThreadData] = None):
+        min_index: int = sys.maxsize
+        if routines is not None:
+            for rt in routines.values():
+                ix = rt.routine.get_index()
+                min_index = ix if ix < min_index else min_index
 
-def update_routines(bundles: dict, schema: dict, ls_cfg, role: str, pop_ls: PopList):
-    """
-    v.1
-    Initialize missing routines from the list and update Producers and Consumers
-    for present instances by assigning either an Input or Output list.
-    Parameters
-    ----------
-    pop_ls
-    role
-    schema
-    bundles
-    ls_cfg
-
-    Returns
-    -------
-
-    """
-
-    def update(obj_cfg):
-        if obj_cfg.ID not in schema:
-            if obj_cfg.BUNDLE not in bundles:
-                return False
+            if min_index > self.delay:  # requires handling dead/stuck threads
+                for ls in self.lists:
+                    if len(ls) != 0:
+                        ls.clean(start=self.delay, end=min_index)
+                self.delay = min_index
+                logger.info(msg="Cache cleaning iteration completed", )
             else:
-                schema[obj_cfg.ID] = {
-                    _exec: getattr(bundles[obj_cfg.BUNDLE], obj_cfg.ID),
-                    PRODUCER: None,
-                    CONSUMER: None,
-                    _mt: obj_cfg.MT
-                }
-        schema[obj_cfg.ID][role] = pop_ls
-        return True
-    list(map(update, ls_cfg))
+                completed = self.check_completion(self.lists)
+                if completed:
+                    self.terminate = True
+                else:
+                    logger.info("Waiting for halted modules")
+
+    def manage_mem(self, routines: Dict[int, dict]):
+        schedule.every(5).seconds.do(self.__cache_clean__, routines=routines)
+        while not self.terminate:
+            run_pending()
+            sleep(1)
+        logger.info("Cache management finished")
 
 
-def build_pipeline(state, bundles) -> List[Thread]:
-    """
-    Builds pipeline by iterating over the list of PopList dict objects in
-    the configuration dictionary. Updates at each step the pipeline chain
-    Parameters
-    ----------
-    bundles list of available bundles
-    state shared state containing execution arguments and values
-    Returns list of threads (not started)
-    -------
+class Pipeline(PlineMod):
+    pipeline: List[Thread]
 
-    """
+    routines: Dict[int, dict]
 
-    edict = EasyDict(fu.parse_yaml(CONFIG))
-    threads: dict = {}
-    print(bundles)
-    for pls_cfg in edict.PIPELINES.POPLIST:
-        pls: PopList = PopList(doc=pls_cfg.ID)
-        update_routines(bundles, threads, ls_cfg=pls_cfg.PRODUCER, role=PRODUCER, pop_ls=pls)
-        update_routines(bundles, threads, ls_cfg=pls_cfg.CONSUMER, role=CONSUMER, pop_ls=pls)
+    def __init__(self):
+        super().__init__()
+        self.pipeline = []
+        self.routines = []
 
-    pipeline = [threading.Thread(target=r[_exec], args=(state, r[CONSUMER], r[PRODUCER]))
-                for r in threads.values()]
-    if not pipeline:
-        exit(0)
-    return pipeline
+    def execute_pipeline(self):
+        """
+        Iterate over all routines and execute all.
+        Blocking routines do not use multiprocessing (multithreading)
+        Non-Blocking create a separate process with multiprocessing lib
+        The state is shared by routines but usage should be limited to debugging! (except state.args)
+        Returns
+        -------
+
+        """
+        for ix, pl in enumerate(self.pipeline):
+            pl.start()
+        super().manage_mem(self.routines)
+        if self.terminate:
+            [t.join(0) for t in self.pipeline]  # only necessary if threads are stuck
+            logger.info(msg="All threads joined.")
+        logger.info(msg="Pipeline routine execution completed. Exiting.")
+
+    def build_pipeline(self, state: State):
+        """
+            Builds pipeline by iterating over the list of PopList dict objects in
+            the configuration dictionary. Updates at each step the pipeline chain
+            Parameters
+            ----------
+            bundles list of available bundles
+            state shared state containing execution arguments and values
+            Returns list of threads (not started)
+            -------
+
+            """
+        from tools.pipes.routines import __generate_list__, RoutineSet
+        from tools.pipes.structures import RNode
+
+        # collect script args & parse
+        list(map(lambda x: x.script(state.parser), RoutineSet.__all__))
+        state.parse_args()
+        state.logger = logger
+
+        # generate active routine set using args
+        routines: Dict[int, RNode] = __generate_list__(state, state.args)
+        print(routines)
+        # verify routines
+        bundle_list = routines.items()
+        threads: Dict[int, ThreadData] = {}
+        for (_hash, rt) in bundle_list:
+            if not isinstance(rt, RNode):
+                raise IOError('Found invalid routine object')
+            if rt.__class__ not in RoutineSet.__all__:
+                raise AssertionError(f'{rt} : Not present in list of accepted node routines')
+
+        # initialize recursive building & build the thread list
+        self.update(routines, threads, routines.popitem())
+        self.pipeline = [threading.Thread(target=r.exec, args=(r.inputs, r.output))
+                         for r in threads.values()]
+        self.routines = threads
+
+    def update(self, routines: Dict[int, RNode], threads: Dict[int, ThreadData], rt: Tuple[int, RNode], cycles=False):
+        p: PopList = PopList()
+        if rt[0] in threads and not cycles:
+            raise Exception('Detected cycle in ' + f'{rt[1]}: Cycles are prohibited')
+        if rt[1] is not None:
+            self.lists.append(p)
+            threads[rt[0]] = ThreadData(rt[1], rt[1].run, rt[1].dependencies(), p, True)
+            routines.pop(rt[0], None)
+            dep_ls = rt[1].dependencies()
+            if isinstance(dep_ls, list) and dep_ls != []:
+                for ix, parent in enumerate(rt[1].h_dependencies()):
+                    if parent in threads:
+                        threads[rt[0]].inputs[ix] = threads[parent].output
+                    else:
+                        if routines.get(parent) is not None:
+                            self.update(routines, threads, rt=(parent, routines.get(parent)), cycles=cycles)
+                            threads[rt[0]].inputs[ix] = threads[parent].output
+        if len(routines) != 0:
+            self.update(routines, threads, routines.popitem(), cycles=cycles)
+
+    def fconfig(self):
+        return CONFIG
