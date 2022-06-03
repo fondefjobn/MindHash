@@ -32,6 +32,7 @@ class VisUtils:
         self.vis.get_render_option().point_size = 1.0
         self.vis.get_render_option().background_color = np.zeros(3)
         self.add_bbox()
+        self.reset_view()
 
     def quit(self):
         self.vis.close()
@@ -68,7 +69,7 @@ class VisUtils:
             [0, 1, 0],
             [0, 0, 1]
         ])
-        extent = np.asarray([50, 50, 100])
+        extent = np.asarray([50, 50, 50])
 
         bbox = open3d.geometry.OrientedBoundingBox(center, rotation, extent)
         self.vis.add_geometry(bbox)
@@ -89,7 +90,6 @@ class VisUtils:
         if ref_boxes is not None:
             self.draw_box(ref_boxes, [0, 1, 0], ref_labels, ref_scores)
 
-        #self.reset_view()
         vis.poll_events()
         vis.update_renderer()
 

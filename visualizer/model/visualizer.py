@@ -20,7 +20,7 @@ class Visualizer(Thread):
         self.predictions = [None]
         self.frame = 0
         self.paused = False
-        self.fps = 60
+        self.fps = 120
         self.window = vis_utils.VisUtils()
         self.controller = command_handler.CommandHandler(self, self.window.vis)
 
@@ -40,20 +40,20 @@ class Visualizer(Thread):
     def draw_loop(self):
         while self.running:
             start = time.time()
-            if not self.paused and self.frame < len(self.points):
-                if self.predictions[self.frame] is None:
-                    self.window.draw_scenes(
-                        points=self.points[self.frame])
-                else:
-                    self.window.draw_scenes(
-                        points=self.points[self.frame],
-                        ref_boxes=np.asarray(self.predictions[self.frame]['ref_boxes']),
-                        ref_scores=np.asarray(self.predictions[self.frame]['ref_scores']),
-                        ref_labels=np.asarray(self.predictions[self.frame]['ref_labels'])
-                    )
-                self.frame += 1
+            if self.predictions[self.frame] is None:
+                self.window.draw_scenes(
+                    points=self.points[self.frame])
             else:
-                self.window.vis.poll_events()
+                self.window.draw_scenes(
+                    points=self.points[self.frame],
+                    ref_boxes=np.asarray(self.predictions[self.frame]['ref_boxes']),
+                    ref_scores=np.asarray(self.predictions[self.frame]['ref_scores']),
+                    ref_labels=np.asarray(self.predictions[self.frame]['ref_labels'])
+                )
+
+            if not self.paused and self.frame + 1 < len(self.points):
+                self.frame += 1
+
             end = time.time()
             time_elapsed = end - start
             time.sleep(max(1/self.fps - time_elapsed, 0))

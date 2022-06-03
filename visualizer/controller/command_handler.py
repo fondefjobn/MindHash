@@ -16,6 +16,8 @@ class CommandHandler:
         self.commands = dict()
         self.commands[32] = self.toggle_pause  # space bar
         self.commands[256] = self.quit  # escape
+        self.commands[263] = self.previous_frame  # left
+        self.commands[262] = self.next_frame  # right
 
         self.register_commands()
 
@@ -26,6 +28,18 @@ class CommandHandler:
     def toggle_pause(self, vis):
         self.model.paused = not self.model.paused
         return False
+
+    def previous_frame(self, vis):
+        self.model.paused = True
+        if self.model.frame > 0:
+            self.model.frame -= 1
+        return True
+
+    def next_frame(self, vis):
+        self.model.paused = True
+        if self.model.frame + 1 < len(self.model.points):
+            self.model.frame += 1
+        return True
 
     def quit(self, vis):
         self.model.stop()
