@@ -31,6 +31,7 @@ class VisUtils:
         self.vis.create_window(width=self.camera.intrinsic.width, height=self.camera.intrinsic.height)
         self.vis.get_render_option().point_size = 1.0
         self.vis.get_render_option().background_color = np.zeros(3)
+        self.add_bbox()
 
     def quit(self):
         self.vis.close()
@@ -60,6 +61,18 @@ class VisUtils:
         view_control = self.vis.get_view_control()
         view_control.convert_from_pinhole_camera_parameters(self.camera, allow_arbitrary=True)
 
+    def add_bbox(self):
+        center = np.asarray([0, 0, 0])
+        rotation = np.asarray([
+            [1, 0, 0],
+            [0, 1, 0],
+            [0, 0, 1]
+        ])
+        extent = np.asarray([50, 50, 100])
+
+        bbox = open3d.geometry.OrientedBoundingBox(center, rotation, extent)
+        self.vis.add_geometry(bbox)
+
     def draw_scenes(self, points, gt_boxes=None, ref_boxes=None, ref_labels=None, ref_scores=None):
         vis = self.vis
         vis.clear_geometries()
@@ -68,7 +81,7 @@ class VisUtils:
             pts = open3d.geometry.PointCloud()
             pts.points = open3d.utility.Vector3dVector(points[:, :3])
             pts.colors = open3d.utility.Vector3dVector(np.ones((points.shape[0], 3), dtype=np.float64))
-            vis.add_geometry(pts)
+            vis.add_geometry(pts, reset_bounding_box=False)
 
         if gt_boxes is not None:
             self.draw_box(gt_boxes, [0, 0, 1])
@@ -76,7 +89,7 @@ class VisUtils:
         if ref_boxes is not None:
             self.draw_box(ref_boxes, [0, 1, 0], ref_labels, ref_scores)
 
-        self.reset_view()
+        #self.reset_view()
         vis.poll_events()
         vis.update_renderer()
 
@@ -113,4 +126,4 @@ class VisUtils:
             else:
                 line_set.paint_uniform_color(box_colormap[ref_labels[i]])
 
-            self.vis.add_geometry(line_set)
+            self.vis.add_geometry(line_set, reset_bounding_box=False)

@@ -3,7 +3,7 @@ llvmlite
 numba
 requests
 wrapt
-matplotlibz
+matplotlib
 schedule
 django
 tensorboardX
