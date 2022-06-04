@@ -38,18 +38,22 @@ class Visualizer(Thread):
         self.predictions.append(predictions)
 
     def draw_loop(self):
+        rendered_frame = self.frame - 1
         while self.running:
             start = time.time()
-            if self.predictions[self.frame] is None:
-                self.window.draw_scenes(
-                    points=self.points[self.frame])
-            else:
-                self.window.draw_scenes(
-                    points=self.points[self.frame],
-                    ref_boxes=np.asarray(self.predictions[self.frame]['ref_boxes']),
-                    ref_scores=np.asarray(self.predictions[self.frame]['ref_scores']),
-                    ref_labels=np.asarray(self.predictions[self.frame]['ref_labels'])
-                )
+            self.window.vis.poll_events()
+            if self.frame != rendered_frame:
+                if self.predictions[self.frame] is None:
+                    self.window.draw_scenes(
+                        points=self.points[self.frame])
+                else:
+                    self.window.draw_scenes(
+                        points=self.points[self.frame],
+                        ref_boxes=np.asarray(self.predictions[self.frame]['ref_boxes']),
+                        ref_scores=np.asarray(self.predictions[self.frame]['ref_scores']),
+                        ref_labels=np.asarray(self.predictions[self.frame]['ref_labels'])
+                    )
+                rendered_frame = self.frame
 
             if not self.paused and self.frame + 1 < len(self.points):
                 self.frame += 1

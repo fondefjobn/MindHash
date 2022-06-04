@@ -90,7 +90,6 @@ class VisUtils:
         if ref_boxes is not None:
             self.draw_box(ref_boxes, [0, 1, 0], ref_labels, ref_scores)
 
-        vis.poll_events()
         vis.update_renderer()
 
     def translate_boxes_to_open3d_instance(self, gt_boxes):
