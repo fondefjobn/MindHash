@@ -2,12 +2,28 @@ import unittest
 
 
 class TestSum(unittest.TestCase):
+    def test_Process(self):
+        """
+        This test checks if the processing of an object of the class Statistics is correct.
+        """
+        stest = Statistics_with_Reference({'ref_boxes': [], 'ref_scores': [1, 0.5, 0.25], 'ref_labels': [1, 2, 3]}, {})
+        stest.process()
+        self.assertEqual(stest.totals, [1, 0, 0])
+
+    def test_Set_Data(self):
+        """
+        This test checks if the class is receiving the information correctly.
+        """
+        stest = Statistics_with_Reference({'ref_boxes': [], 'ref_scores': [0.75, 0.5, 0.25], 'ref_labels': [1, 2, 3]},
+                                          {})
+        self.assertEqual([stest.boxes, stest.scores, stest.labels], [[], [0.75, 0.5, 0.25], [1, 2, 3]])
+
     def test_Reference(self):
         """
         This test creates an object Statistics_with_Reference with specific values for totals, tps, fps and fns and
         tries to extract the correct json from it, testing all calculation methods we have defined.
         """
-        stest = Statistics_with_Reference({}, {})
+        stest = Statistics_with_Reference({'ref_boxes': [], 'ref_scores': [], 'ref_labels': []}, {})
         stest.totals = [10, 20, 30]
         stest.tp = [3, 14, 16]
         stest.fp = [6, 4, 4]
@@ -23,14 +39,6 @@ class TestSum(unittest.TestCase):
                                            'f_score': {'Cars': 0.46153846153846156, 'Persons': 0.823529411764706,
                                                        'Bycicles': 0.6956521739130435, 'macro_avg': 0.660240015738737,
                                                        'weighted_avg': 0.6992589678011674}})
-
-    def test_bar(self):
-        """
-        test explanation
-        """
-        data = "not a number"
-        with self.assertRaises(TypeError):
-            result = sum(data)
 
 
 if __name__ == '__main__':
