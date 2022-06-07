@@ -30,7 +30,7 @@ class Routines(RNode):
 
 class Statistics:
 
-    def __init__(self, data, reference):  # TODO basic class without reference, super class with reference
+    def __init__(self, data):  # TODO basic class without reference, super class with reference
         self.boxes = data['ref_boxes']
         self.scores = data['ref_scores']
         self.labels = data['ref_labels']
@@ -51,7 +51,8 @@ class Statistics:
 
 class Statistics_with_Reference(Statistics):
 
-    def __init__(self, data, reference):  # TODO basic class without reference, super class with reference
+    def __init__(self, data, reference):
+        Statistics.__init__(self, data)
         self.reference = reference  # reference
 
         # Split in 3 categories: 1-car, 2-pedestrian, 3-cyclist
