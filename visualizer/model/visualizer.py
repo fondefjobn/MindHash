@@ -19,8 +19,8 @@ class Visualizer:
         """
         self.window.draw_scenes(
             points=np.asarray(points),
-            ref_boxes=np.asarray(predictions['ref_boxes']),
-            ref_scores=np.asarray(predictions['ref_scores']),
-            ref_labels=np.asarray(predictions['ref_labels'])
+            ref_boxes=predictions['ref_boxes'],
+            ref_scores=predictions['ref_scores'],
+            ref_labels=predictions['ref_labels']
         )
 

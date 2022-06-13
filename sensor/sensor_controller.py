@@ -3,7 +3,7 @@ from typing import List, Optional, Union, Tuple
 
 from sensor.sensor_set import __all__
 from sensor.sensor_template import Sensor
-from tools.pipes import RNode
+from tools.pipeline import RNode
 from tools.structs.custom_structs import PopList
 from utilities.utils import FileUtils
 

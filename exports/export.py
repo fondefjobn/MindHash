@@ -3,7 +3,7 @@ from threading import Event
 from time import sleep
 from typing import List, Tuple
 
-from tools.pipes import RNode
+from tools.pipeline import RNode
 from tools.structs import PopList, Index
 from utilities.utils import FileUtils, def_numpy, ArrayUtils, def_json, def_pcap
 

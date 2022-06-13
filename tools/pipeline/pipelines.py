@@ -1,18 +1,16 @@
-import functools
-import logging
-import operator
 import sys
 import threading
 from abc import ABC
-from math import inf
 from threading import Thread
 from time import sleep
 from typing import List, Dict, Tuple
 
 import schedule
 from pcdet.utils import common_utils
-from schedule import repeat, run_pending, every
-from tools.pipes.structures import RNode, State, ThreadData, RModule
+from schedule import run_pending
+
+from tools.pipeline.routines import RoutineSet
+from tools.pipeline.structures import RNode, State, ThreadData, RModule
 from tools.structs import PopList
 
 """
@@ -102,7 +100,7 @@ class Pipeline(PlineMod):
             logger.info(msg="All threads joined.")
         logger.info(msg="Pipeline routine execution completed. Exiting.")
 
-    def build_pipeline(self, state: State):
+    def build_pipeline(self, state: State, rs: RoutineSet):
         """
             Builds pipeline by iterating over the list of PopList dict objects in
             the configuration dictionary. Updates at each step the pipeline chain
@@ -114,16 +112,17 @@ class Pipeline(PlineMod):
             -------
 
             """
-        from tools.pipes.routines import __generate_list__, RoutineSet
-        from tools.pipes.structures import RNode
+        from tools.pipeline.routines import __generate_list__
+        from tools.pipeline.structures import RNode
 
         # collect script args & parse
-        list(map(lambda x: x.script(state.parser), RoutineSet.__all__))
+
+        list(map(lambda x: x.script(state.parser), rs.__all__))
         state.parse_args()
         state.logger = logger
 
         # generate active routine set using args
-        routines: Dict[int, RNode] = __generate_list__(state, state.args)
+        routines: Dict[int, RNode] = __generate_list__(state, rs.activationList(state.args))
         print(routines)
         # verify routines
         bundle_list = routines.items()
@@ -131,7 +130,7 @@ class Pipeline(PlineMod):
         for (_hash, rt) in bundle_list:
             if not isinstance(rt, RNode):
                 raise IOError('Found invalid routine object')
-            if rt.__class__ not in RoutineSet.__all__:
+            if rt.__class__ not in rs.__all__:
                 raise AssertionError(f'{rt} : Not present in list of accepted node routines')
 
         # initialize recursive building & build the thread list

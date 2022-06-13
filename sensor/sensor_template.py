@@ -9,7 +9,7 @@ from dataclasses import dataclass
 
 from easydict import EasyDict
 
-from tools.pipes.structures import RModule, DClass
+from tools.pipeline.structures import RModule, DClass
 from tools.structs import PopList
 from utilities.utils import FileUtils
 

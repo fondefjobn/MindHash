@@ -9,7 +9,7 @@ from pcdet.models import build_network, load_data_to_gpu
 from pcdet.utils import common_utils
 
 from OpenPCDet.pcdet.config import cfg, cfg_from_yaml_file
-from tools.pipes import RNode, State
+from tools.pipeline import RNode, State
 from tools.structs.custom_structs import PopList
 
 """

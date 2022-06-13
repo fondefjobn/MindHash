@@ -1,6 +1,7 @@
 import argparse
 
-from tools.pipes import Pipeline, State
+from routine_set.routine_sets import StreetAnalytics
+from tools.pipeline import Pipeline, State
 
 """
 @Module: CLI
@@ -21,5 +22,5 @@ def parse_config():
 if __name__ == '__main__':
     parser = parse_config()
     pd = Pipeline()
-    pd.build_pipeline(state=State(parser=parser))
+    pd.build_pipeline(state=State(parser=parser), rs=StreetAnalytics())
     pd.execute_pipeline()

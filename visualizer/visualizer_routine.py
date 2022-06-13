@@ -1,5 +1,5 @@
 from typing import List
-from tools.pipes import RNode
+from tools.pipeline import RNode
 from tools.structs import PopList
 from visualizer.model.visualizer import Visualizer
 

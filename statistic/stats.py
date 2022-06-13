@@ -1,6 +1,6 @@
 from typing import List, Tuple
 
-from tools.pipes import RNode
+from tools.pipeline import RNode
 from tools.structs import PopList
 
 

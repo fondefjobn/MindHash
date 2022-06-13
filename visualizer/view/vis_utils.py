@@ -3,6 +3,8 @@ import matplotlib
 import numpy as np
 from pathlib import Path
 
+import torch
+
 """
 @Module:VisUtils
 @Description: Open3d visualization tool box largely based on OpenPCDet/tools/visual_utils/open3d_vis_utils,
@@ -63,7 +65,12 @@ class VisUtils:
     def draw_scenes(self, points, gt_boxes=None, ref_boxes=None, ref_labels=None, ref_scores=None):
         vis = self.vis
         vis.clear_geometries()
-
+        if isinstance(points, torch.Tensor):
+            points = points.cpu().numpy()
+        if isinstance(gt_boxes, torch.Tensor):
+            gt_boxes = gt_boxes.cpu().numpy()
+        if isinstance(ref_boxes, torch.Tensor):
+            ref_boxes = ref_boxes.cpu().numpy()
         if points is not None:
             pts = open3d.geometry.PointCloud()
             pts.points = open3d.utility.Vector3dVector(points[:, :3])

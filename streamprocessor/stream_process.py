@@ -5,8 +5,8 @@ import numpy as np
 from easydict import EasyDict
 from numba import jit
 
-from tools.pipes import RNode
-from tools.pipes.structures import RModule
+from tools.pipeline import RNode
+from tools.pipeline.structures import RModule
 from tools.structs.custom_structs import PopList, MatrixCloud
 from utilities.utils import FileUtils as Fs, \
     Cloud3dUtils, FileUtils
@@ -53,6 +53,11 @@ class StreamProcessor(RModule):
         super().__init__()
         self.load_config(__file__)
         print(self.config)
+        config = self.config
+        param = config.STEPS.LIST[0].CONFIG
+        bounds = np.transpose(np.array([param.X, param.Y, param.Z], dtype=float))
+        self.lower = bounds[0]
+        self.upper = bounds[1]
 
     def read_stream(self, mx: MatrixCloud):
         """
@@ -66,18 +71,9 @@ class StreamProcessor(RModule):
         -------
 
         """
-        pcd = Cloud3dUtils.to_pcdet(mx)
-        config = self.config
-        param = config.STEPS.LIST[0].CONFIG
-        pcd = pcd[((pcd[:, 0] > param.X[0]) &
-                   (pcd[:, 0] < param.X[1]))
-                  &
-                  ((pcd[:, 1] > param.Y[0]) &
-                   (pcd[:, 1] < param.Y[1]))
-                  &
-                  ((pcd[:, 2] > param.Z[0]) &
-                   (pcd[:, 2] < param.Z[1]))
-                  ]
+        pcd: np.ndarray = Cloud3dUtils.to_pcdet(mx)
+        comp_pcd = pcd[:, [0, 1, 2]]
+        pcd = pcd[np.all((self.lower < comp_pcd) & (comp_pcd < self.upper), axis=1)]
         return pcd
 
     def fconfig(self):

@@ -1,3 +1,4 @@
+import argparse
 import dataclasses
 import functools
 import os
@@ -37,7 +38,8 @@ class State:
         self.state = {  # for debugging only
             "success": True
         }
-        self.parser = parser
+        self.parser = parser if parser is not None \
+            else argparse.ArgumentParser(description='Default Pipeline ArgumentParser')
 
     def merge(self, new_state):
         self.state.update(new_state.state)
@@ -89,7 +91,7 @@ class RModule(object):
 
 class RNode(RModule):
     """
-    Parent class of routines acting as nodes in pipes.pipeline.PipelineDaemon
+    Parent class of routines acting as nodes in pipeline.pipeline.PipelineDaemon
     Dependencies must be set by any class subclassing RNode
     """
 
