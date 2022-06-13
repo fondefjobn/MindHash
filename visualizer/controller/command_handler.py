@@ -3,7 +3,7 @@ import open3d as o3d
 
 class CommandHandler:
     window: o3d.visualization.VisualizerWithKeyCallback
-    commands = dict
+    commands: dict
 
     def __init__(self, model, window):
         self.model = model
@@ -13,13 +13,13 @@ class CommandHandler:
         self.register_commands()
 
     def setup_command_map(self):
-        commands = dict()
-        commands[32] = self.toggle_pause  # space bar
-        commands[256] = self.quit  # escape
+        self.commands = dict()
+        self.commands[32] = self.toggle_pause  # space bar
+        self.commands[256] = self.quit  # escape
+        self.commands[263] = self.previous_frame  # left
+        self.commands[262] = self.next_frame  # right
 
-        self.window.register_key_callback(32, self.toggle_pause)
-
-        self.commands = commands
+        self.register_commands()
 
     def register_commands(self):
         for key in self.commands:
@@ -28,6 +28,18 @@ class CommandHandler:
     def toggle_pause(self, vis):
         self.model.paused = not self.model.paused
         return False
+
+    def previous_frame(self, vis):
+        self.model.paused = True
+        if self.model.frame > 0:
+            self.model.frame -= 1
+        return True
+
+    def next_frame(self, vis):
+        self.model.paused = True
+        if self.model.frame + 1 < len(self.model.points):
+            self.model.frame += 1
+        return True
 
     def quit(self, vis):
         self.model.stop()
