@@ -51,23 +51,6 @@ class VisUtils:
         path = Path(__file__).with_name(CONFIG)
         self.camera = open3d.io.read_pinhole_camera_parameters(str(path))
 
-    def get_coor_colors(self, obj_labels):
-        """
-        Args:
-            obj_labels: 1 is ground, labels > 1 indicates different instance cluster
-        Returns:
-            rgb: [N, 3]. color for each point.
-        """
-        colors = matplotlib.colors.XKCD_COLORS.values()
-        max_color_num = obj_labels.max()
-
-        color_list = list(colors)[:max_color_num + 1]
-        colors_rgba = [matplotlib.colors.to_rgba_array(color) for color in color_list]
-        label_rgba = np.array(colors_rgba)[obj_labels]
-        label_rgba = label_rgba.squeeze()[:, :3]
-
-        return label_rgba
-
     """
     Reset the camera position and rotation to the loaded camera configuration.
     """
