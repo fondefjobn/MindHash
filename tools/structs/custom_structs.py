@@ -213,6 +213,13 @@ class Ch:
 
 
 class CachedList:
+    """
+    A list where most of the data that isn't used is saved to temporary files.
+    The CachedList will have the same functionality as a normal list,
+    but it will not take as much memory.
+    The list is seperated into blocks, where only the block where the last index was read
+    and the end block of the list are stored into memory. The others are stored in files.
+    """
     _BLOCK_SIZE = 50
     _cached_blocks: list
     _current_block: list
@@ -224,11 +231,17 @@ class CachedList:
         self._new_block = []
         self.loaded_block = -1
 
+    """
+    Append an item to the list. If the block is full, save the block to a file.
+    """
     def append(self, item):
         self._new_block.append(item)
         if len(self._new_block) >= self._BLOCK_SIZE:
             self._save_to_file()
 
+    """
+    Save the block to a temporary file and add the file to the file list. 
+    """
     def _save_to_file(self):
         block = tempfile.NamedTemporaryFile()
         pickle.dump(self._new_block, block)
@@ -236,14 +249,28 @@ class CachedList:
         self._cached_blocks.append(block)
         self._new_block = []
 
+    """
+    Load block based on the index that is given, where the loaded block is located at
+    _cached_blocks[item // BLOCK_SIZE]. 
+    """
     def _load_from_file(self, item):
         block = item // self._BLOCK_SIZE
         self._current_block = pickle.load(open(self._cached_blocks[block].name, 'rb'))
         self.loaded_block = block
 
+    """
+    Return the size of all the blocks stored in the files and the last block that has not been 
+    saved to a file yet.
+    """
     def __len__(self):
         return len(self._cached_blocks) * self._BLOCK_SIZE + len(self._new_block)
 
+    """
+    Get an item at the index for the list. There are three scenario's: 
+    If the item is in the last block, then return the item from that last block
+    If the item is in the currently loaded block, then return the item from the loaded block.
+    Otherwise, the item is in a file and the file needs to be loaded first.
+    """
     def __getitem__(self, item):
         if item >= len(self._cached_blocks) * self._BLOCK_SIZE:
             return self._new_block[item % self._BLOCK_SIZE]

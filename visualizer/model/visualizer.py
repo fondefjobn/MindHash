@@ -5,6 +5,15 @@ from visualizer.view import vis_utils
 from visualizer.controller import command_handler
 from tools.structs import CachedList
 
+"""
+@Module: Visualizer model
+@Description: The model of the visualizer that handles the data and passes it to the view. 
+It also contains the main loop for drawing the frames.
+Points and predictions are added by the visualizer routine, then they are stored
+in a cached list.
+@Author: Bob van der Vuurst
+"""
+
 
 class Visualizer(Thread):
     running: bool = False
@@ -16,6 +25,9 @@ class Visualizer(Thread):
     frame: int
     fps: int
 
+    """
+    Initialize the cached lists, the view and the controller of the visualizer. 
+    """
     def enable(self):
         self.points = CachedList()
         self.points.append(None)
@@ -27,19 +39,34 @@ class Visualizer(Thread):
         self.window = vis_utils.VisUtils()
         self.controller = command_handler.CommandHandler(self, self.window.vis)
 
+    """
+    Stop the visualizer, close the window for the visualizer.
+    """
     def stop(self):
         self.running = False
         self.window.quit()
 
+    """
+    Initialize the visualizer, then begin the loop to draw frames.
+    """
     def run(self):
         self.enable()
         self.running = True
         self.draw_loop()
 
+    """
+    Add points and predictions for one frame to the visualizer, so they can be visualized in the draw loop,
+    """
     def add_frame(self, points: np.ndarray, predictions: dict = None):
         self.points.append(np.asarray(points))
         self.predictions.append(predictions)
 
+    """
+    The main loop of the visualizer. Each iteration of the loop, it will check for pressed keys,
+    execute the commands for those keys and give the frames to the view module for rendering. 
+    If the frame is not changed, then the view will not be updated.
+    The loop will run at a maximum of self.fps frames per second. 
+    """
     def draw_loop(self):
         rendered_frame = self.frame - 1
         while self.running:

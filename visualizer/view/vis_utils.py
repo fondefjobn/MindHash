@@ -2,7 +2,6 @@ import open3d
 import matplotlib
 import numpy as np
 from pathlib import Path
-
 import torch
 
 """
@@ -27,19 +26,28 @@ class VisUtils:
     vis: open3d.visualization.Visualizer
     camera: open3d.camera
 
+    """
+    Initialize the Visualizer window and set up the camera. 
+    """
     def __init__(self):
         self.vis = open3d.visualization.VisualizerWithKeyCallback()
-        self.get_camera_cfg()
+        self.load_camera_cfg()
         self.vis.create_window(width=self.camera.intrinsic.width, height=self.camera.intrinsic.height)
         self.vis.get_render_option().point_size = 1.0
         self.vis.get_render_option().background_color = np.zeros(3)
         self.add_bbox()
         self.reset_view()
 
+    """
+    Close the visualizer.
+    """
     def quit(self):
         self.vis.close()
 
-    def get_camera_cfg(self):
+    """
+    Load the initial camera config from a file. 
+    """
+    def load_camera_cfg(self):
         path = Path(__file__).with_name(CONFIG)
         self.camera = open3d.io.read_pinhole_camera_parameters(str(path))
 
@@ -60,10 +68,19 @@ class VisUtils:
 
         return label_rgba
 
+    """
+    Reset the camera position and rotation to the loaded camera configuration.
+    """
     def reset_view(self):
         view_control = self.vis.get_view_control()
         view_control.convert_from_pinhole_camera_parameters(self.camera, allow_arbitrary=True)
 
+    """
+    Adds a bounding box to the visualizer, with the goal that the camera changes so that the 
+    bounding box is in view. Because of the way the camera works in open3d, this is one of the only
+    ways to get the camera to show the right image. More info can be found here:
+    http//www.open3d.org/docs/release/python_api/open3d.camera.html
+    """
     def add_bbox(self):
         center = np.asarray([0, 0, 0])
         rotation = np.asarray([
@@ -76,6 +93,10 @@ class VisUtils:
         bbox = open3d.geometry.OrientedBoundingBox(center, rotation, extent)
         self.vis.add_geometry(bbox)
 
+    """
+    Draw the points and the boxes with the visualizer. This is done by first deleting everything,
+    then adding the new points and boxes to the visualizer and updating the renderer.    
+    """
     def draw_scenes(self, points, gt_boxes=None, ref_boxes=None, ref_labels=None, ref_scores=None):
         vis = self.vis
         vis.clear_geometries()
@@ -99,16 +120,19 @@ class VisUtils:
 
         vis.update_renderer()
 
+    """
+    Create a set of all the lines of the outlines of the boxes, where the indices for the corners
+    are defined as follows:
+          4 -------- 6
+         /|         /|
+        5 -------- 3 .
+        | |        | |
+        . 7 -------- 1
+        |/         |/
+        2 -------- 0
+    
+    """
     def translate_boxes_to_open3d_instance(self, gt_boxes):
-        """
-                 4-------- 6
-               /|         /|
-              5 -------- 3 .
-              | |        | |
-              . 7 -------- 1
-              |/         |/
-              2 -------- 0
-        """
         center = gt_boxes[0:3]
         lwh = gt_boxes[3:6]
         axis_angles = np.array([0, 0, gt_boxes[6] + 1e-10])
@@ -124,6 +148,10 @@ class VisUtils:
 
         return line_set, box3d
 
+    """
+    Draw all the boxes with their corresponding labels and scores, if they are given.
+    First, the boxes are converted to their sets of outlines, then those will be added to the visualizer.
+    """
     def draw_box(self, gt_boxes, color=(0, 1, 0), ref_labels=None, score=None):
         for i in range(gt_boxes.shape[0]):
             line_set, box3d = self.translate_boxes_to_open3d_instance(gt_boxes[i])

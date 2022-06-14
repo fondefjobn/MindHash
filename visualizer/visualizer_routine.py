@@ -2,10 +2,9 @@ from typing import List
 from tools.pipeline import RNode
 from tools.structs import PopList
 from visualizer.model.visualizer import Visualizer
-from time import sleep
 
 """
-@Module: Visualization 
+@Module: Visualization Routine
 @Description: Tool for visualizing the point cloud and the results of the evaluation in 3D
 @Author: Bob van der Vuurst
 """
