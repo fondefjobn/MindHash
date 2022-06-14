@@ -2,9 +2,12 @@ from typing import List, Tuple
 
 from tools.pipes import RNode
 from tools.structs import PopList
+from statistics import stdev
+from math import sqrt
 
-tn = 0                  # true negatives (constant 0)
-threshold = 0.7         # TODO: assignment is already somewhere else - use that instead
+tn = 0                    # true negatives (constant 0)
+threshold = 0.7           # TODO: assignment is already somewhere else - use that instead
+tolerance_margin = 0.15
 object_names = ['Cars', 'Persons', 'Bycicles']
 
 class Routines(RNode):
@@ -30,10 +33,11 @@ class Routines(RNode):
 
 class Statistics:
 
-    def __init__(self, data):  # TODO basic class without reference, super class with reference
+    def __init__(self, data):
         self.boxes = data['ref_boxes']
         self.scores = data['ref_scores']
         self.labels = data['ref_labels']
+        self.times = data['ref_time']
 
         self.totals = [0] * len(object_names)  # count number of occurences for each object type
 
@@ -46,14 +50,18 @@ class Statistics:
         output = {}
         for obj, count in zip(object_names, self.totals):
             output[obj] = count
+        output['average_time'] = self.average_detection_time
+        output['standard_deviation_time'] = stdev(self.times)
         return output
 
+    def average_detection_time(self):
+        return sum(self.times) / len(self.times)
 
 class Statistics_with_Reference(Statistics):
 
     def __init__(self, data, reference):
         Statistics.__init__(self, data)
-        self.reference = reference  # reference
+        self.reference_boxes, self.reference_labels = reference  # ground truths (list of 8 element lists containg the bounding box and a label)
 
         # Split in 3 categories: 1-car, 2-pedestrian, 3-cyclist
         self.tp = [0] * len(object_names)  # true positives
@@ -64,7 +72,31 @@ class Statistics_with_Reference(Statistics):
         for score, label in zip(self.scores, self.labels):
             if score >= threshold:
                 self.totals[label] += 1
-        # TODO: reference
+        for label, ref_label, box, ref_box in zip(self.labels, self.ref_labels, self.boxes, self.ref_boxes):
+            dist = self.distance_btw_points(box[0], box[7])
+            ref_dist = self.distance_btw_points(ref_box[0], ref_box[7])
+            dist_0 = self.distance_btw_points(box[0], ref_box[0])
+            dist_7 = self.distance_btw_points(box[7], ref_box[7])
+            margin = tolerance_margin * ref_dist
+            if not (dist > ref_dist + margin or dist < ref_dist - margin
+                or dist_0 > margin or dist_7 > margin):
+                if label == ref_label:
+                    self.tp[ref_label] += 1
+                else:
+                    self.fp[ref_label] += 1
+            else:
+                self.fn[label] += 1
+
+    def sorting(self):
+        for box, ref_box in zip(self.boxes, self.ref_boxes):
+            box.sort(key = lambda x: (x[0], x[1], x[2]))
+            ref_box.sort(key = lambda x: (x[0], x[1], x[2]))
+
+    def distance_btw_points(self, box1, box2):
+        sum = 0
+        for x1, x2 in zip(box1, box2):
+            sum += pow(x1 - x2, 2)
+        return sqrt(sum)
 
     def to_json(self):
         output = {}

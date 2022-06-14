@@ -2,7 +2,7 @@ from pathlib import Path
 from threading import Event
 from typing import List, Tuple
 
-import torch
+import torch, time
 from pcdet.datasets import DatasetTemplate
 from pcdet.models import build_network, load_data_to_gpu
 from pcdet.utils import common_utils
@@ -97,6 +97,7 @@ class Routines(RNode):
         with torch.no_grad():
             x = 0
             while not _input[0].full(x):
+                start_time = time.time()
                 data_dict = dyn_dataset[x]
                 logger.info(f'Processed frame index: \t{x + 1}')
                 data_dict = dyn_dataset.collate_batch([data_dict])
@@ -105,7 +106,8 @@ class Routines(RNode):
                 out = {
                     'ref_boxes': pred_dicts[0]['pred_boxes'].cpu().numpy(),
                     'ref_scores': pred_dicts[0]['pred_scores'].cpu().numpy(),
-                    'ref_labels': pred_dicts[0]['pred_labels'].cpu().numpy()
+                    'ref_labels': pred_dicts[0]['pred_labels'].cpu().numpy(),
+                    'ref_time': time.time() - start_time
                 }
                 output.append(out)
                 x += 1
