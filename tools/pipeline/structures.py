@@ -170,8 +170,9 @@ class RNode(RModule):
         """
         return -1
 
+    @classmethod
     @abstractmethod
-    def script(self, parser: ArgumentParser) -> bool:
+    def script(cls, parser: ArgumentParser) -> bool:
         """
         Append script arguments to the argument parser
         Return True if said arguments

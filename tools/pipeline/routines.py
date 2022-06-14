@@ -15,11 +15,14 @@ from tools.pipeline.structures import RNode
 
 @dataclass(frozen=True)
 class RoutineSet(ABC):
-    __all__ = {None}
 
     @abstractmethod
     def activationList(self, a: Namespace) -> List[Tuple[object, RNode]]:
         return []
+
+    @abstractmethod
+    def __all__(self) -> set:
+        return {}
 
 
 def __generate_list__(state, __all__: List[Tuple[object, RNode]]) -> Dict[int, RNode]:

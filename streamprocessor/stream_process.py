@@ -105,6 +105,8 @@ class Routines(RNode):
         and output to an allocated PopList
         Parameters
         ----------
+        output
+        _input
         kwargs
 
         Returns

@@ -196,7 +196,7 @@ class MatrixCloud:
 
     def __init__(self):
         self.timestamps = None
-        self.xyz: NDArray[(Any, 3), float] = None
+        self.xyz: NDArray[(3, Any), float] = None
         self.channels = {
             Ch.NEAR_IR: None,
             Ch.SIGNAL: None,
