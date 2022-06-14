@@ -2,6 +2,7 @@ from typing import List
 from tools.pipeline import RNode
 from tools.structs import PopList
 from visualizer.model.visualizer import Visualizer
+from time import sleep
 
 """
 @Module: Visualization 

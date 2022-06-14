@@ -3,21 +3,24 @@ import numpy as np
 import time
 from visualizer.view import vis_utils
 from visualizer.controller import command_handler
+from tools.structs import CachedList
 
 
 class Visualizer(Thread):
-    running: bool
+    running: bool = False
     window: vis_utils.VisUtils
     controller: command_handler.CommandHandler
     paused: bool
-    points: list
-    predictions: list
+    points: CachedList
+    predictions: CachedList
     frame: int
     fps: int
 
     def enable(self):
-        self.points = [None]
-        self.predictions = [None]
+        self.points = CachedList()
+        self.points.append(None)
+        self.predictions = CachedList()
+        self.predictions.append(None)
         self.frame = 0
         self.paused = False
         self.fps = 120
@@ -29,8 +32,8 @@ class Visualizer(Thread):
         self.window.quit()
 
     def run(self):
-        self.running = True
         self.enable()
+        self.running = True
         self.draw_loop()
 
     def add_frame(self, points: np.ndarray, predictions: dict = None):
@@ -55,7 +58,7 @@ class Visualizer(Thread):
                     )
                 rendered_frame = self.frame
 
-            if not self.paused and self.frame + 1 < len(self.points):
+            if not self.paused and self.frame + 1 < min(len(self.points), len(self.predictions)):
                 self.frame += 1
             end = time.time()
             time_elapsed = end - start

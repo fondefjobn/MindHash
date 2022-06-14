@@ -1,18 +1,16 @@
-import dataclasses
-from collections import deque
 from threading import Event
 from typing import List, Optional, Union, Tuple, TypeVar, Set, Iterable, Dict, Any
 
-import numpy as np
-from numpy import ndarray
 from numpy.typing import NDArray
 from wrapt import synchronized
+import tempfile
+import pickle
 
 """
 @Module: Custom Data Structures
 @Description: Contains classes extending functionalities (Decorators) or offering new functionalities from scratch.
 Also contains data classes.
-@Author: Radu Rebeja
+@Authors: Radu Rebeja, Bob van der Vuurst
 """
 
 
@@ -212,3 +210,47 @@ class Ch:
     REFLECTIVITY = 'REFLECTIVITY'
     SIGNAL = 'SIGNAL'
     channel_arr = [RANGE, SIGNAL, NEAR_IR, REFLECTIVITY]  # exact order of fields
+
+
+class CachedList:
+    _BLOCK_SIZE = 50
+    _cached_blocks: list
+    _current_block: list
+    _new_block: list
+
+    def __init__(self):
+        self._cached_blocks = []
+        self._current_block = []
+        self._new_block = []
+        self.loaded_block = -1
+
+    def append(self, item):
+        self._new_block.append(item)
+        if len(self._new_block) >= self._BLOCK_SIZE:
+            self._save_to_file()
+
+    def _save_to_file(self):
+        block = tempfile.NamedTemporaryFile()
+        pickle.dump(self._new_block, block)
+        block.flush()
+        self._cached_blocks.append(block)
+        self._new_block = []
+
+    def _load_from_file(self, item):
+        block = item // self._BLOCK_SIZE
+        self._current_block = pickle.load(open(self._cached_blocks[block].name, 'rb'))
+        self.loaded_block = block
+
+    def __len__(self):
+        return len(self._cached_blocks) * self._BLOCK_SIZE + len(self._new_block)
+
+    def __getitem__(self, item):
+        if item >= len(self._cached_blocks) * self._BLOCK_SIZE:
+            return self._new_block[item % self._BLOCK_SIZE]
+
+        elif self.loaded_block * self._BLOCK_SIZE <= item < (self.loaded_block + 1) * self._BLOCK_SIZE:
+            return self._current_block[item % self._BLOCK_SIZE]
+
+        else:
+            self._load_from_file(item)
+            return self._current_block[item % self._BLOCK_SIZE]
