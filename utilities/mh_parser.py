@@ -1,38 +1,51 @@
+from abstract_parser import ParserInput, ParserOutput
+from OpenPCDet.tools.evaluate import labels
 
 """
-@Module: PCDet to MindHash JSON parser
-@Description: Parses PCDet evaluation tool predictions output to MindHash JSON output template
+@Module: Parser
+@Description: Parser from PCDet evaluation tool predictions output to MindHash JSON output template
 @Author: Lubor Budaj
 """
 
-class SAParser:
+"""
+Parser for MindHash client StreetAnalytics work specific output
+"""
+class SAParser(ParserInput, ParserOutput):
+    
     """
-    Parser for MindHash client StreetAnalytics work specific output
+    Initializes the parameters from 'data' dictionary, which is the output of PCDet
     """
+    def initialize(self, data):
+        self.boxes = data['ref_boxes']
+        self.scores = data['ref_scores']
+        self.labels = data['ref_labels']
 
-    def __init__(self, output):
-        self.boxes = output['ref_boxes']
-        self.scores = output['ref_scores']
-        self.labels = output['ref_labels']
-
+    """
+    Outputs a list of fictionaries. Each dictionary contains information
+    about one detected object. Each dictionary is in format requested
+    by Mindhash. The data that our evaluation tool does not provide are
+    indetifies as -1.
+    Note: time variable here is a time from beginning of the recording
+    that we don't know during the evaluation, not an evaluation time.
+    """
     def to_json(self):
         output = []
         for box, label in zip(self.boxes, self.labels):
             output.append({
                 "measurement": "tracked_object",
                 "tags": {
-                    "object_id": -1,
-                    "object_type": label,
+                    "object_id": label,
+                    "object_type": labels[label],
                 },
-                "time": -1,  # From recording start time + frame * 1 / framerate
+                "time": -1,
                 "fields": {
-                    "object_id": -1,
-                    "object_type": label,
+                    "object_id": label,
+                    "object_type": labels[label],
                     "length": box[3],
                     "width": box[4],
                     "height": box[5],
-                    "x": box[0],  # from centroid x
-                    "y": box[1],  # from centroid y
+                    "x": box[0],
+                    "y": box[1],
                     "velocity": -1,
                     "ma_velocity": -1,
                 }
