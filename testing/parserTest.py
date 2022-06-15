@@ -1,6 +1,6 @@
 import unittest
 from utilities.mh_parser import SAParser
-from OpenPCDet.tools.evaluate import labels
+from OpenPCDet.tools.detection import CLS_LABELS
 
 """
 @Module: Parser
@@ -38,8 +38,8 @@ class TestParser(unittest.TestCase):
             self.assertEqual(json[i]['tags']['object_id'], REF_LABELS[i])
             self.assertEqual(json[i]['fields']['object_id'], REF_LABELS[i])
             # Test if object types are correctly ordered and copied 
-            self.assertEqual(json[i]['tags']['object_type'], labels[REF_LABELS[i]])
-            self.assertEqual(json[i]['fields']['object_type'], labels[REF_LABELS[i]])
+            self.assertEqual(json[i]['tags']['object_type'], CLS_LABELS[REF_LABELS[i]])
+            self.assertEqual(json[i]['fields']['object_type'], CLS_LABELS[REF_LABELS[i]])
             # Test if the length is copied
             self.assertEqual(json[i]['fields']['length'], REF_BOXES[i][3])
             # Test if the width is copied

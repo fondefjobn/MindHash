@@ -1,5 +1,5 @@
 from abstract_parser import ParserInput, ParserOutput
-from OpenPCDet.tools.evaluate import labels
+from OpenPCDet.tools.detection import CLS_LABELS
 
 """
 @Module: Parser
@@ -35,12 +35,12 @@ class SAParser(ParserInput, ParserOutput):
                 "measurement": "tracked_object",
                 "tags": {
                     "object_id": label,
-                    "object_type": labels[label],
+                    "object_type": CLS_LABELS[label],
                 },
                 "time": -1,
                 "fields": {
                     "object_id": label,
-                    "object_type": labels[label],
+                    "object_type": CLS_LABELS[label],
                     "length": box[3],
                     "width": box[4],
                     "height": box[5],
