@@ -6,6 +6,8 @@ from tools.structs.custom_structs import PopList
 from utilities.utils import FileUtils as Fs, \
     Cloud3dUtils
 
+import open3d as o3d
+
 """
 @Module: Stream Processor
 @Description: Provides functionalities for data filtering and augmentation tasks
@@ -57,9 +59,41 @@ class Routines(RoutineSet):
         -------
 
         """
+<<<<<<< Updated upstream
         sp: StreamProcessor = StreamProcessor(args[0], args[1])
         out = args[0].get(state['x'], self.event)
         sp.read_stream(out)
+=======
+        pcd: np.ndarray = Cloud3dUtils.to_pcdet(mx)
+        comp_pcd = pcd[:, [0, 1, 2]]
+        pcd = pcd[np.all((self.lower < comp_pcd) & (comp_pcd < self.upper), axis=1)]
+        return pcd
+
+    def fconfig(self):
+        return "config.yaml"
+    
+    def display_inlier_outlier(self, cloud, ind):
+        in_list = cloud.select_by_index(ind)
+        pcd: np.ndarray = Cloud3dUtils.to_pcdet(in_list.points)
+        return pcd
+
+    def statistical_filter(self, pcd_init):
+        pcd = o3d.geometry.PointCloud()
+        pcd.points = o3d.utility.Vector3dVector(pcd_init)
+
+        voxel_down_pcd  = pcd.voxel_down_sample(voxel_size=0.02)
+        cl, ind = voxel_down_pcd.remove_statistical_outlier(nb_neighbors=20,
+                                                    std_ratio=2.0)
+        self.display_inlier_outlier(voxel_down_pcd, ind)
+    
+    def radius_filter(self, pcd_init):
+        pcd = o3d.geometry.PointCloud()
+        pcd.points = o3d.utility.Vector3dVector(pcd_init)
+
+        voxel_down_pcd  = pcd.voxel_down_sample(voxel_size=0.02)
+        cl, ind = voxel_down_pcd.remove_radius_outlier(nb_points=16, radius=0.05)
+        self.display_inlier_outlier(voxel_down_pcd, ind)
+>>>>>>> Stashed changes
 
 
 class StreamProcessor:
