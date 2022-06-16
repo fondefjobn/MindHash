@@ -71,7 +71,7 @@ class Visualizer(Thread):
         rendered_frame = self.frame - 1
         while self.running:
             start = time.time()
-            self.window.vis.poll_events()
+            self.controller.poll_events()
             if self.frame != rendered_frame:
                 if self.predictions[self.frame] is None:
                     self.window.draw_scenes(
@@ -90,5 +90,4 @@ class Visualizer(Thread):
             end = time.time()
             time_elapsed = end - start
             time.sleep(max(1/self.fps - time_elapsed, 0))
-
 

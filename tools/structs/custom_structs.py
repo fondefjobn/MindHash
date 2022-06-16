@@ -255,7 +255,9 @@ class CachedList:
     """
     def _load_from_file(self, item):
         block = item // self._BLOCK_SIZE
-        self._current_block = pickle.load(open(self._cached_blocks[block].name, 'rb'))
+        with open(self._cached_blocks[block].name, 'rb') as file:
+            self._current_block = pickle.load(file)
+        #self._current_block = pickle.load(open(self._cached_blocks[block].name, 'rb'))
         self.loaded_block = block
 
     """

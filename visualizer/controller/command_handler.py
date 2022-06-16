@@ -10,15 +10,22 @@ are called when the corresponding keys are pressed.
 
 
 class CommandHandler:
-    window: o3d.visualization.VisualizerWithKeyCallback
+    vis: o3d.visualization.VisualizerWithKeyCallback
     commands: dict
 
     def __init__(self, model, window):
         self.model = model
-        self.window = window
+        self.vis = window
 
         self.setup_command_map()
         self.register_commands()
+
+    """
+    Check if any keys have been pressed and execute the corresponding commands for those keys.
+    This is all done internally by the open3d VisualizerWithKeyCallback with the poll_events() function.
+    """
+    def poll_events(self):
+        self.vis.poll_events()
 
     """
     Add all commmands to the command maps with their corresponding keys.
@@ -38,7 +45,7 @@ class CommandHandler:
     """
     def register_commands(self):
         for key in self.commands:
-            self.window.register_key_callback(key, self.commands[key])
+            self.vis.register_key_callback(key, self.commands[key])
 
     """
     A command to toggle if the model is paused or not. 

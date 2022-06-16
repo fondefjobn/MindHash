@@ -1,23 +1,62 @@
-from visualizer import Routines as VisRoutine
-import pickle
-from pathlib import Path
-
-PICKLE_FILENAME = "test.pickle"
-
-
-def load_pickle():
-    p = Path(__file__).with_name(PICKLE_FILENAME)
-    with open(p, "rb") as file:
-        return pickle.load(file)
+import unittest
+import visualizer
+from time import sleep
+import numpy as np
 
 
-def test_visualizer():
-    data = load_pickle()
+class VisualizerTest(unittest.TestCase):
+    vis: visualizer.Visualizer
 
-    visualizer = VisRoutine(None)
+    def initialize_visualizer(self):
+        self.vis = visualizer.Visualizer()
+        self.vis.start()
+        sleep(1)
 
-    visualizer.run(_input=data["input"], output=data["output"], kwargs=data["kwargs"])
+    def add_frames(self, num_frames, points_per_frame):
+        rand_range = 50
+        for i in range(num_frames):
+            self.vis.add_frame(np.random.rand(points_per_frame, 5) * rand_range - 0.5 * rand_range)
+
+    def test_visualizer(self):
+        self.initialize_visualizer()
+        self.assertEqual(self.vis.running, True)
+        self.vis.stop()
+        self.assertEqual(self.vis.running, False)
+
+    def test_commands(self):
+        num_frames = 10
+        points_per_frame = 5000
+
+        self.initialize_visualizer()
+        self.add_frames(num_frames, points_per_frame)
+        vis = self.vis
+        controller = vis.controller
+        self.assertEqual(vis.paused, False)
+        controller.toggle_pause(None)
+        self.assertEqual(vis.paused, True)
+        controller.toggle_pause(None)
+        self.assertEqual(vis.paused, False)
+
+        for i in range(num_frames):
+            controller.previous_frame(None)
+        self.assertEqual(vis.paused, True)
+        self.assertEqual(vis.frame, 0)
+
+        controller.next_frame(None)
+        self.assertEqual(vis.frame, 1)
+        self.assertEqual(vis.paused, True)
+
+        controller.quit(None)
+        self.assertEqual(vis.running, False)
+
+    def test_memory(self):
+        num_frames = 5000
+        points_per_frame = 200000
+
+        self.initialize_visualizer()
+        self.add_frames(num_frames, points_per_frame)
+        self.vis.stop()
 
 
 if __name__ == '__main__':
-    test_visualizer()
+    unittest.main()
