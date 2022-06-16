@@ -1,4 +1,4 @@
-from abstract_parser import ParserInput, ParserOutput
+from .abstract_parser import ParserInput, ParserOutput
 from OpenPCDet.tools.detection import CLS_LABELS
 
 """
@@ -17,7 +17,6 @@ class SAParser(ParserInput, ParserOutput):
     """
     def initialize(self, data):
         self.boxes = data['ref_boxes']
-        self.scores = data['ref_scores']
         self.labels = data['ref_labels']
 
     """
