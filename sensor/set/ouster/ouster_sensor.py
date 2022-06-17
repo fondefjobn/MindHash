@@ -4,6 +4,7 @@ import logging
 import time
 from argparse import Namespace
 from contextlib import closing
+from dataclasses import dataclass
 from queue import Queue, Full
 from typing import List
 
@@ -32,8 +33,8 @@ default_pcap: str = '/pcap'
 default_metadata: str = '/metadata'
 CONFIG: str = 'config.yaml'
 
-
-class _IO_CONFIG_:
+@dataclass
+class IO_CONFIG:
     """
     dictionary
     """
@@ -83,9 +84,6 @@ class _IO_(Sensor):
         self.meta_file = f"{self.host}.json"
         self.pcap_path = sep.join([pcap_p, self.pcap_file])
         self.meta_path = sep.join([meta_p, self.meta_file])
-
-    def __init_dirs__(self):
-        pass
 
     def fconfig(self):
         return CONFIG
@@ -137,10 +135,10 @@ class _IO_(Sensor):
             metadata = client.SensorInfo(f.read())
             self.METADATA = metadata
         source = pcap.Pcap(self.PCAP, metadata)
-        self.ouster_pcap_to_mxc(source, metadata, frame_ls=self.output, N=self.N)
+        self.ouster_pcap_to_mxc(source, metadata, frame_ls=self.output, frames_n=self.N)
 
     def ouster_pcap_to_mxc(self, source: client.PacketSource, metadata: client.SensorInfo, frame_ls: PopList,
-                           N: int = None):
+                           frames_n: int = None):
         """
 
         Parameters
@@ -148,7 +146,7 @@ class _IO_(Sensor):
         source : ouster-SDK source class for PCD packets
         metadata : ouster-SDK sensor calibration & metadata class created from provided JSON
         frame_ls : output PopList
-        N : number of frames to read
+        frames_n : number of frames to read
 
         Returns
         -------
@@ -160,19 +158,19 @@ class _IO_(Sensor):
         # create an iterator of LidarScans from pcap and bound it if num is specified
         scans = iter(client.Scans(source))
         batch_sz = self.BATCH_SIZE
-        if N < batch_sz:
-            batch_sz = N
+        if frames_n < batch_sz:
+            batch_sz = frames_n
 
         DELAY = self.config.DELAY
 
         try:
-            for CHK in range(0, N, batch_sz):
+            for interval in range(0, frames_n, batch_sz):
                 batch = islice(scans, 0, batch_sz - 1, self.sample_rate)
                 frame_ls.append(self.get_matrix_cloud(xyzlut, next(batch), Ch.channel_arr))  # sampling batch
                 for scan in batch:
                     frame_ls.append(self.get_matrix_cloud(xyzlut, scan, Ch.channel_arr))
-                while (frame_ls.first < CHK - DELAY) \
-                        and len(frame_ls) != frame_ls.first:  # TODO verify correctness
+                while (frame_ls.first < interval - DELAY) \
+                        and len(frame_ls) != frame_ls.first:
                     time.sleep(2)
         except StopIteration:
             self.logger.info("Sensor input completed, but stepped out of bounds for N.")

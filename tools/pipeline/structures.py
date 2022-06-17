@@ -29,7 +29,6 @@ class State:
     Wrapper class for state and args used in script execution
 
     """
-    state: dict
     args: Namespace
     parser: ArgumentParser
     logger = None
@@ -57,11 +56,13 @@ class State:
 class RModule(object):
     config: EasyDict = None
 
-    def __init__(self):
-        pass
+    def __init__(self, doc: str = None):
+        if doc is not None:
+            self.__doc__ = doc
 
     def generate_steps(self):
-        pass
+        """Abstraction not yet implemented"""
+        return []
 
     def load_config(self, __file__: str, fname: str = None):
         load_cfg: str
@@ -75,6 +76,7 @@ class RModule(object):
         self.config = EasyDict(FileUtils.parse_yaml(str(path)))
 
     def compose(self, struct: object):
+        """Abstraction not yet implemented"""
         pass
 
     @classmethod
@@ -86,7 +88,7 @@ class RModule(object):
 
     @abstractmethod
     def fconfig(self) -> str:
-        return None
+        return 'None'
 
 
 class RNode(RModule):
@@ -187,6 +189,10 @@ class MissingDataclassFieldError(Exception):  # refactor to custom errors
     pass
 
 
+class DetectedModuleLoops(Exception):  # refactor to custom errors
+    pass
+
+
 @dataclasses.dataclass
 class DClass:
     @classmethod
@@ -197,7 +203,7 @@ class DClass:
                 if field in (dataclasses.MISSING, None):
                     raise MissingDataclassFieldError(f"{field} Not supplied in {ds}")
         except IOError('Supplying non-dataclass instance to field checking method'):
-            raise
+            print("This may lead to undefined behavior")
 
 
 @dataclasses.dataclass

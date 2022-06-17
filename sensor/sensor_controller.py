@@ -29,6 +29,7 @@ class SensorController(object):
             c_dict = FileUtils.load_file(config, ext='yaml')
         else:
             c_dict = config
+        self.config = c_dict
 
     def start_stream(self):
         self._IO_.read()
@@ -44,9 +45,6 @@ class Routines(RNode):
     """
     Main Sensor Input
     """
-
-    def get_index(self) -> int:
-        return inf
 
     @classmethod
     def script(cls, parser) -> bool:
@@ -83,7 +81,7 @@ class Routines(RNode):
 
               """
         sensor: Sensor = __all__[self.state.args.sensor](self.state.args, output, self.state.logger)  # SensorData here?
-        controller: SensorController = SensorController({}, sensor)
+        # controller: SensorController = SensorController({}, sensor)
         if not self.state.args.live:
             sensor.convert()
         else:
@@ -94,3 +92,9 @@ class Routines(RNode):
         return []
 
     channels: List[int] = [1, 2, 3, 4]
+
+    def fconfig(self) -> str:
+        pass
+
+    def get_index(self) -> int:
+        return inf

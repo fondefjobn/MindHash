@@ -10,7 +10,7 @@ from pcdet.utils import common_utils
 from schedule import run_pending
 
 from tools.pipeline.routines import RoutineSet
-from tools.pipeline.structures import RNode, State, ThreadData, RModule
+from tools.pipeline.structures import RNode, State, ThreadData, RModule, DetectedModuleLoops
 from tools.structs import PopList
 
 """
@@ -145,7 +145,7 @@ class Pipeline(PlineMod):
     def update(self, routines: Dict[int, RNode], threads: Dict[int, ThreadData], rt: Tuple[int, RNode], cycles=False):
         p: PopList = PopList()
         if rt[0] in threads and not cycles:
-            raise Exception('Detected cycle in ' + f'{rt[1]}: Cycles are prohibited')
+            raise DetectedModuleLoops('Detected cycle in ' + f'{rt[1]}: Cycles are prohibited')
         if rt[1] is not None:
             self.lists.append(p)
             threads[rt[0]] = ThreadData(rt[1], rt[1].run, rt[1].dependencies(), p, True)
