@@ -10,6 +10,7 @@ from tools.pipeline.structures import RModule
 from tools.structs.custom_structs import PopList, MatrixCloud
 from utilities.utils import FileUtils as Fs, \
     Cloud3dUtils, FileUtils
+import open3d as o3d
 
 """
 @Module: Stream Processor
@@ -54,7 +55,7 @@ class StreamProcessor(RModule):
         self.lower = bounds[0]
         self.upper = bounds[1]
 
-    def read_stream(self, mx: MatrixCloud):
+    def read_stream(self, mx: MatrixCloud, filter = None):
         """
         Converts PCD to required format and applies scene
         editing techniques
@@ -69,10 +70,36 @@ class StreamProcessor(RModule):
         pcd: np.ndarray = Cloud3dUtils.to_pcdet(mx)
         comp_pcd = pcd[:, [0, 1, 2]]
         pcd = pcd[np.all((self.lower < comp_pcd) & (comp_pcd < self.upper), axis=1)]
+        if filter == "statistical":
+            pcd = self.statistical_filter(pcd)
+        elif filter == "radius":
+            pcd = self.radius_filter(pcd)
         return pcd
 
     def fconfig(self):
         return "config.yaml"
+
+    def filter_inlier(self, cloud, ind):
+        in_list = cloud.select_by_index(ind)
+        pcd: np.ndarray = Cloud3dUtils.to_pcdet(in_list.points)
+        return pcd
+
+    def statistical_filter(self, pcd_init):
+        pcd = o3d.geometry.PointCloud()
+        pcd.points = o3d.utility.Vector3dVector(pcd_init)
+
+        voxel_down_pcd = pcd.voxel_down_sample(voxel_size=0.02)
+        cl, ind = voxel_down_pcd.remove_statistical_outlier(nb_neighbors=20,
+                                                            std_ratio=2.0)
+        return self.display_inlier_outlier(voxel_down_pcd, ind)
+
+    def radius_filter(self, pcd_init):
+        pcd = o3d.geometry.PointCloud()
+        pcd.points = o3d.utility.Vector3dVector(pcd_init)
+
+        voxel_down_pcd = pcd.voxel_down_sample(voxel_size=0.02)
+        cl, ind = voxel_down_pcd.remove_radius_outlier(nb_points=16, radius=0.05)
+        return self.display_inlier_outlier(voxel_down_pcd, ind)
 
 
 class Routines(RNode):
