@@ -20,7 +20,7 @@ from tools.pipeline import RNode
 from tools.pipeline.routines import RoutineSet
 from tools.structs import PopList
 
-file_path = "../../OpenPCDet/tools/" + ds_cfgs["PVRCNN++"]
+file_path = "../OpenPCDet/tools/" + ds_cfgs["PVRCNN++"]
 base_path = Path(__file__).parent
 OUTPUT_IOBOX: str = "outputIOBOX"
 OUTPUT_MLSTDN: str = "outputMLSTDN"
@@ -39,10 +39,10 @@ class Args:
     port = None
     n = 200
     sensor = "ouster"
-    mlpath: str = "../../resources/trained_models/pvrcnn++_epoch_82.pth"
+    mlpath: str = "resources/trained_models/pvrcnn++_epoch_82.pth"
     ml: str.upper = "PVRCNN++"
-    input = "../../resources/pcap/OS1-128_Rev-05_Urban-Drive.pcap"
-    meta = "../../resources/pcap/OS1-128_Rev-05_Urban-Drive.json"
+    input = "resources/pcap/OS1-128_Rev-05_Urban-Drive.pcap"
+    meta = "resources/pcap/OS1-128_Rev-05_Urban-Drive.json"
     live: bool = False
     th: float = 0.7
 
@@ -76,7 +76,7 @@ class TestDetector(RNode):
         super().__init__(state)
         self.logger = self.state.logger
         config = base_path / file_path
-        self.model_config = cfg_from_yaml_file(config, cfg, rel_path="../../OpenPCDet/tools/")
+        self.model_config = cfg_from_yaml_file(config, cfg, rel_path="OpenPCDet/tools/")
         self.custom_config(state)
 
     def custom_config(self, state: State):
