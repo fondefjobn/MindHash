@@ -69,9 +69,7 @@ class Statistics_with_Reference(Statistics):
         self.fn = [0] * len(object_names)  # false negatives
 
     def process(self):
-        for score, label in zip(self.scores, self.labels):
-            if score >= threshold:
-                self.totals[label] += 1
+        super().process()
         for label, ref_label, box, ref_box in zip(self.labels, self.ref_labels, self.boxes, self.ref_boxes):
             dist = self.distance_btw_points(box[0], box[7])
             ref_dist = self.distance_btw_points(ref_box[0], ref_box[7])
@@ -99,10 +97,7 @@ class Statistics_with_Reference(Statistics):
         return sqrt(sum)
 
     def to_json(self):
-        output = {}
-        output['count'] = {}
-        for obj, count in zip(object_names, self.totals):
-            output['count'][obj] = count
+        output = super().to_json()
         output['precision'] = {}
         for i in range(len(object_names)):
             output['precision'][object_names[i]] = self.precision(i)
@@ -121,19 +116,24 @@ class Statistics_with_Reference(Statistics):
         return output
 
     def precision(self, i):
+        if self.tp[i] + self.fp[i] == 0: return 0
         return self.tp[i] / (self.tp[i] + self.fp[i])
 
     def recall(self, i):
+        if self.tp[i] + self.fn[i] == 0: return 0
         return self.tp[i] / (self.tp[i] + self.fn[i])
 
     def f_score(self, i):
+        if self.precision(i) + self.recall(i) == 0: return 0
         return 2 * self.precision(i) * self.recall(i) / (self.precision(i) + self.recall(i))
 
     def macro_avg(self, function):
         return sum(function(i) for i in range(len(object_names))) / len(object_names)
 
     def weighted_avg(self, function):
+        if sum(self.totals) == 0: return 0
         return sum(function(i) * self.totals[i] for i in range(len(object_names))) / sum(self.totals)
 
     def accuracy(self):
+        if sum(self.totals) == 0: return 0
         return sum(self.tp) / sum(self.totals)
