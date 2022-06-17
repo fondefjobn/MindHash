@@ -22,7 +22,7 @@ class RoutineSet(ABC):
 
     @abstractmethod
     def __all__(self) -> set:
-        return {}
+        return set()
 
 
 def __generate_list__(state, __all__: List[Tuple[object, RNode]]) -> Dict[int, RNode]:

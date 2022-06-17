@@ -157,7 +157,7 @@ class Cloud3dUtils:
         # field_vals = ArrayUtils.norm_zero_one(field_vals)
         # get all data as one H x W x n (inputs) int64 array
         xyz = matrix_cloud.xyz
-        sig = ArrayUtils.norm_zero_one(matrix_cloud.channels[Ch.SIGNAL])  # TODO verify
+        sig = ArrayUtils.norm_zero_one(matrix_cloud.channels[Ch.SIGNAL])
         elon = np.zeros(xyz.shape[1], dtype=float)
         # sectors = np.array_split(, indices_or_sections=4, axis=0)
         # sectors = np.concatenate((sectors[2], sectors[3]))

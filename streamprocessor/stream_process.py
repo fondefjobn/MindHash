@@ -44,11 +44,6 @@ class StreamProcessor(RModule):
     Configuration file establishes the behavior of this class
     See Also config.yaml within package
     """
-
-    c: dict = None
-
-    idle: bool = False
-
     def __init__(self, cfg_path=None):  # def __init__(self, cfg_path=None): #
         super().__init__()
         self.load_config(__file__)
