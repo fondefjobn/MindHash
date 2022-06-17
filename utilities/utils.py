@@ -4,16 +4,18 @@ from typing import List, TypeVar, Dict
 
 import numpy as np
 import yaml
+import tensorflow as tf
 from easydict import EasyDict as edict
 from ouster import client as cl
 from yaml import SafeLoader
+from waymo_open_dataset import dataset_pb2
 
 from tools.structs.custom_structs import Ch, MatrixCloud
 
 """
 @Module: Utilities
 @Description: Provides general utility functions
-@Author: Radu Rebeja
+@Authors: Radu Rebeja, Lubor Budaj
 """
 
 # Global variables
@@ -23,10 +25,6 @@ def_pcap: str = '../resources/output/pcap_out'
 _T = TypeVar("_T")
 _K = TypeVar("_K")
 
-"""
-
-if classes become bloated we split per module
-"""
 
 logging.basicConfig(format='%(levelname)s:%(message)s', level=logging.CRITICAL)
 
@@ -57,6 +55,56 @@ def edict_to_dict(edict_obj):
             dict_obj[key] = vals
 
     return dict_obj
+
+
+def label_to_box(l, id):
+    """
+    Helper function for data extraction from tfrecord file
+    @https://github.com/erksch/3D-object-tracking
+    """
+    return [
+        l.box.center_x,
+        l.box.center_y,
+        l.box.center_z,
+        l.box.width,
+        l.box.length,
+        l.box.height,
+        l.box.heading,
+        l.type,
+        id,
+    ]
+
+
+def read_tfrecord(path):
+    """
+    Function for data extraction from tfrecord file
+    The function is inspired by @https://github.com/erksch/3D-object-tracking
+    path - path to tfrecord file
+    output - list of frames. each frame is a list of boxes specified by [x,y,z,w,l,h,heading,label,id]
+    """
+    dataset = tf.data.TFRecordDataset([path])
+    frames = []
+
+    for data in dataset:
+        frame = dataset_pb2.Frame()
+        frame.ParseFromString(bytearray(data.numpy()))
+        frames.append(frame)
+
+    label_id_to_idx = {}
+    output = []
+    for i, frame in enumerate(frames):
+        labels = frame.laser_labels
+
+        labels = [label for label in labels if label.type != 3]
+
+        for label in labels:
+            if label.id not in label_id_to_idx:
+                label_id_to_idx[label.id] = len(label_id_to_idx)
+
+        detections = [label_to_box(label, label_id_to_idx[label.id]) for label in labels]
+        output.append(detections)
+
+    return output
 
 
 class FileUtils:
