@@ -49,14 +49,6 @@ class TestVisualizer(unittest.TestCase):
         controller.quit(None)
         self.assertEqual(vis.running, False)
 
-    def test_memory(self):
-        num_frames = 5000
-        points_per_frame = 200000
-
-        self.initialize_visualizer()
-        self.add_frames(num_frames, points_per_frame)
-        self.vis.stop()
-
 
 if __name__ == '__main__':
     unittest.main()
