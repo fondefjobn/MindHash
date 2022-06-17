@@ -4,7 +4,7 @@ from time import sleep
 import numpy as np
 
 
-class VisualizerTest(unittest.TestCase):
+class TestVisualizer(unittest.TestCase):
     vis: visualizer.Visualizer
 
     def initialize_visualizer(self):
