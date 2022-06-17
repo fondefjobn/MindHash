@@ -5,12 +5,11 @@ import numpy as np
 from easydict import EasyDict
 from numba import jit
 
-from tools.pipeline import RNode
+from tools.pipeline.structures import RNode
 from tools.pipeline.structures import RModule
 from tools.structs.custom_structs import PopList, MatrixCloud
 from utilities.utils import FileUtils as Fs, \
     Cloud3dUtils, FileUtils
-
 import open3d as o3d
 
 """
@@ -68,8 +67,10 @@ class StreamProcessor(RModule):
         Parameters
         ----------
         mx :
+
         Returns
         -------
+
         """
         pcd: np.ndarray = Cloud3dUtils.to_pcdet(mx)
         comp_pcd = pcd[:, [0, 1, 2]]
@@ -78,8 +79,7 @@ class StreamProcessor(RModule):
 
     def fconfig(self):
         return "config.yaml"
-    
-    """ Filters from Open3d Library"""
+
     def filter_inlier(self, cloud, ind):
         in_list = cloud.select_by_index(ind)
         pcd: np.ndarray = Cloud3dUtils.to_pcdet(in_list.points)
@@ -89,16 +89,16 @@ class StreamProcessor(RModule):
         pcd = o3d.geometry.PointCloud()
         pcd.points = o3d.utility.Vector3dVector(pcd_init)
 
-        voxel_down_pcd  = pcd.voxel_down_sample(voxel_size=0.02)
+        voxel_down_pcd = pcd.voxel_down_sample(voxel_size=0.02)
         cl, ind = voxel_down_pcd.remove_statistical_outlier(nb_neighbors=20,
-                                                    std_ratio=2.0)
+                                                            std_ratio=2.0)
         self.display_inlier_outlier(voxel_down_pcd, ind)
-    
+
     def radius_filter(self, pcd_init):
         pcd = o3d.geometry.PointCloud()
         pcd.points = o3d.utility.Vector3dVector(pcd_init)
 
-        voxel_down_pcd  = pcd.voxel_down_sample(voxel_size=0.02)
+        voxel_down_pcd = pcd.voxel_down_sample(voxel_size=0.02)
         cl, ind = voxel_down_pcd.remove_radius_outlier(nb_points=16, radius=0.05)
         self.display_inlier_outlier(voxel_down_pcd, ind)
 
@@ -131,8 +131,10 @@ class Routines(RNode):
         output
         _input
         kwargs
+
         Returns
         -------
+
         """
         self.state.logger.info(msg="Stream Processor started...")
         while not _input[0].full(self.ix):
@@ -144,4 +146,3 @@ class Routines(RNode):
     def dependencies(self):
         from sensor.sensor_controller import Routines as Input
         return [Input]
-

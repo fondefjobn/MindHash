@@ -9,7 +9,12 @@ __pycache__/
 # PCAP files
 *.pcap
 
-*.json
+*.yaml
+.scannerwork
+resources/output/json/
+resources/pcap/
+# TensorFlow records
+*.tfrecord
 
 # Checkpoint models
 *.pth
@@ -137,3 +142,6 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+# pickle files
+*.pickle
