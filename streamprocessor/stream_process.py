@@ -1,10 +1,15 @@
-from threading import Event
 from queue import Queue
+from typing import List, Tuple
 
-from tools.pipes import RoutineSet, State
-from tools.structs.custom_structs import PopList
+import numpy as np
+from easydict import EasyDict
+from numba import jit
+
+from tools.pipeline import RNode
+from tools.pipeline.structures import RModule
+from tools.structs.custom_structs import PopList, MatrixCloud
 from utilities.utils import FileUtils as Fs, \
-    Cloud3dUtils
+    Cloud3dUtils, FileUtils
 
 import open3d as o3d
 
@@ -34,36 +39,38 @@ Q = Queue
 
 ################
 
-class Routines(RoutineSet):
+class StreamProcessor(RModule):
     """
-    Bundle for routines used to operate with StreamProcessor
+    StreamProcessor
+    Executes data filtering and augmentation tasks
+    Configuration file establishes the behavior of this class
+    See Also config.yaml within package
     """
 
-    def __init__(self):
+    c: dict = None
+
+    idle: bool = False
+
+    def __init__(self, cfg_path=None):  # def __init__(self, cfg_path=None): #
         super().__init__()
+        self.load_config(__file__)
+        print(self.config)
+        config = self.config
+        param = config.STEPS.LIST[0].CONFIG
+        bounds = np.transpose(np.array([param.X, param.Y, param.Z], dtype=float))
+        self.lower = bounds[0]
+        self.upper = bounds[1]
 
-    def id(self):
-        return 'PROCESS_BUNDLE'
-
-    @RoutineSet.poplist_loop(0, 'x')
-    def list_processor(self, state: State, *args):  # abstract to methods
+    def read_stream(self, mx: MatrixCloud):
         """
-        Routine to read from a parsed list of PopList elements
-        and output to an allocated PopList
+        Converts PCD to required format and applies scene
+        editing techniques
         Parameters
         ----------
-        state
-        args
-
+        mx :
         Returns
         -------
-
         """
-<<<<<<< Updated upstream
-        sp: StreamProcessor = StreamProcessor(args[0], args[1])
-        out = args[0].get(state['x'], self.event)
-        sp.read_stream(out)
-=======
         pcd: np.ndarray = Cloud3dUtils.to_pcdet(mx)
         comp_pcd = pcd[:, [0, 1, 2]]
         pcd = pcd[np.all((self.lower < comp_pcd) & (comp_pcd < self.upper), axis=1)]
@@ -72,7 +79,8 @@ class Routines(RoutineSet):
     def fconfig(self):
         return "config.yaml"
     
-    def display_inlier_outlier(self, cloud, ind):
+    """ Filters from Open3d Library"""
+    def filter_inlier(self, cloud, ind):
         in_list = cloud.select_by_index(ind)
         pcd: np.ndarray = Cloud3dUtils.to_pcdet(in_list.points)
         return pcd
@@ -93,28 +101,47 @@ class Routines(RoutineSet):
         voxel_down_pcd  = pcd.voxel_down_sample(voxel_size=0.02)
         cl, ind = voxel_down_pcd.remove_radius_outlier(nb_points=16, radius=0.05)
         self.display_inlier_outlier(voxel_down_pcd, ind)
->>>>>>> Stashed changes
 
 
-class StreamProcessor:
+class Routines(RNode):
     """
-    StreamProcessor
-    Executes data filtering and augmentation tasks
-    Configuration file establishes the behavior of this class
-    See Also config.yaml within package
+    StreamProcessor routine
     """
-    config: dict = None
-    idle: bool = False
-    in_ls: PopList
-    out_ls: PopList
+    ix: int = 0
 
-    def __init__(self, in_ls: PopList, out_ls: PopList, cfg_path=None):
-        self.in_ls = in_ls
-        self.out_ls = out_ls
-        # self._load_config(cfg_path)
+    def get_index(self) -> int:
+        return self.ix
 
-    def _load_config(self, cfg_path):
-        self.config = Fs.parse_yaml(cfg_path)
+    @classmethod
+    def script(cls, parser) -> bool:
+        return True
 
-    def read_stream(self, mx):
-        self.out_ls.add(Cloud3dUtils.to_pcdet(mx))
+    def __init__(self, state):
+        super().__init__(state)
+
+    sp: StreamProcessor = StreamProcessor()
+
+    @RNode.assist
+    def run(self, _input: List[PopList], output: PopList, **kwargs):
+        """
+        Routine to read from a parsed list of PopList elements
+        and output to an allocated PopList
+        Parameters
+        ----------
+        output
+        _input
+        kwargs
+        Returns
+        -------
+        """
+        self.state.logger.info(msg="Stream Processor started...")
+        while not _input[0].full(self.ix):
+            out = _input[0].qy(self.ix, self.event)
+            output.append(self.sp.read_stream(out))
+            self.ix += 1
+        self.state.logger.info(msg="Stream Processor : DONE")
+
+    def dependencies(self):
+        from sensor.sensor_controller import Routines as Input
+        return [Input]
+
