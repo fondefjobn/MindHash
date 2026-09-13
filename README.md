@@ -1,3 +1,5 @@
+
+
 # MindHash
 @Authors: Radu Rebeja, Nevis King
 
@@ -46,12 +48,9 @@ the ArgumentParser documentation
 | OpenPCDet.tools        | Enables the training and evaluation of models.                                                                            |
 | OpenPCDet.pcdet.models | Allows many different models to be run with the same code.                                                                |
 | cli                    | Command line interface from which the program is executed                                                                 |
-| eval.api               | Django webserver which allows those who dont meet the system requirements to remotely run the model on some given data.   |
+| eval_api               | Django webserver which allows those who dont meet the system requirements to remotely run the model on some given data.   |
 | sensor                 | controller for lidar camera. Contains functions for reading datastreams from the scanner as well as doing post processing |
 | statistic              | Runs statistical analysis to compare the efficacy of various models                                                       |
 | streamproccessor       | Provides functionalities for data filtering and augmentation tasks                                                        |
 | tools                  | Pipeline and utilities                                                                                                    |
 | visualizer             | Visualizer for lidar data as well as the bounding boxes produced by the models                                            |
-
-
-
